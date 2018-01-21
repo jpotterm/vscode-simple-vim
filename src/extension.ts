@@ -1,86 +1,39 @@
 'use strict';
 import * as vscode from 'vscode';
 
-enum Mode {
-    Insert,
-    Normal,
-    Visual,
-}
-
-class VimState {
-    typeSubscription: vscode.Disposable;
-    selectionSubscription: vscode.Disposable;
-    mode: Mode;
-    desiredColumns: number[] = [];
-}
+import { Mode } from './modes';
+import { VimState } from './vimState';
+import * as motions from './motions';
+import * as positionUtils from './positionUtils';
 
 const vimState = new VimState();
 
-async function typeHandler(x) {
-    const char = x.text;
+async function typeHandler(e: {text: string}): Promise<void> {
+    const char = e.text;
     const editor = vscode.window.activeTextEditor;
+    const document = editor.document;
 
     if (char === 'i') {
         enterInsertMode();
         removeSubscriptions();
     } else if (char === 'l') {
-        editor.selections = editor.selections.map(function(selection) {
-            const lineLength = editor.document.lineAt(selection.active.line).text.length;
-            const newPosition = new vscode.Position(
-                selection.active.line,
-                Math.min(selection.active.character + 1, lineLength - 1)
-            );
-            return new vscode.Selection(newPosition, newPosition);
-        });
-
+        execMotion(motions.right);
         vimState.desiredColumns = [];
     } else if (char === 'h') {
-        editor.selections = editor.selections.map(function(selection) {
-            const lineLength = editor.document.lineAt(selection.active.line).text.length;
-            const newPosition = new vscode.Position(
-                selection.active.line,
-                Math.max(selection.active.character - 1, 0)
-            );
-            return new vscode.Selection(newPosition, newPosition);
-        });
-
+        execMotion(motions.left);
         vimState.desiredColumns = [];
     } else if (char === 'k') {
         if (vimState.desiredColumns.length === 0) {
             vimState.desiredColumns = editor.selections.map(x => x.active.character);
         }
 
-        editor.selections = editor.selections.map(function(selection, i) {
-            if (selection.active.line === 0) {
-                return selection;
-            }
-
-            const newLineNumber = selection.active.line - 1;
-            const newLineLength = editor.document.lineAt(newLineNumber).text.length;
-            const newPosition = new vscode.Position(
-                newLineNumber,
-                Math.min(vimState.desiredColumns[i], Math.max(newLineLength - 1, 0)),
-            );
-            return new vscode.Selection(newPosition, newPosition);
-        });
+        execMotion(motions.up);
     } else if (char === 'j') {
         if (vimState.desiredColumns.length === 0) {
             vimState.desiredColumns = editor.selections.map(x => x.active.character);
         }
 
-        editor.selections = editor.selections.map(function(selection, i) {
-            if (selection.active.line === editor.document.lineCount - 1) {
-                return selection;
-            }
-
-            const newLineNumber = selection.active.line + 1;
-            const newLineLength = editor.document.lineAt(newLineNumber).text.length;
-            const newPosition = new vscode.Position(
-                newLineNumber,
-                Math.min(vimState.desiredColumns[i], Math.max(newLineLength - 1, 0)),
-            );
-            return new vscode.Selection(newPosition, newPosition);
-        });
+        execMotion(motions.down);
     } else if (char === 'v') {
         if (vimState.mode === Mode.Visual) return;
 
@@ -91,14 +44,64 @@ async function typeHandler(x) {
 
             if (lineLength === 0) return selection;
 
-            const anchorPosition = new vscode.Position(selection.active.line, selection.active.character);
-            const activePosition = new vscode.Position(selection.active.line, selection.active.character + 1);
-            return new vscode.Selection(anchorPosition, activePosition);
+            return new vscode.Selection(selection.active, positionUtils.right(document, selection.active));
         });
     }
 }
 
-function escapeHandler() {
+function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
+    const editor = vscode.window.activeTextEditor;
+    const document = editor.document;
+
+    editor.selections = editor.selections.map(function(selection, i) {
+        if (vimState.mode === Mode.Normal) {
+            const newPosition = motion({
+                document: document,
+                position: selection.active,
+                selectionIndex: i,
+                vimState: vimState,
+            });
+            return new vscode.Selection(newPosition, newPosition);
+        } else if (vimState.mode === Mode.Visual) {
+            let newPosition;
+            if (selection.active.isBefore(selection.anchor)) {
+                const currentPosition = positionUtils.rightNormal(document, selection.active);
+                const motionPosition = motion({
+                    document: document,
+                    position: currentPosition,
+                    selectionIndex: i,
+                    vimState: vimState,
+                });
+                newPosition = positionUtils.left(document, motionPosition);
+            } else {
+                const currentPosition = positionUtils.left(document, selection.active);
+                const motionPosition = motion({
+                    document: document,
+                    position: currentPosition,
+                    selectionIndex: i,
+                    vimState: vimState,
+                });
+                newPosition = positionUtils.right(document, motionPosition);
+            }
+
+            if (selection.active.isAfter(selection.anchor) && newPosition.isBeforeOrEqual(selection.anchor)) {
+                return new vscode.Selection(
+                    positionUtils.right(document, selection.anchor),
+                    newPosition
+                );
+            } else if (selection.active.isBefore(selection.anchor) && newPosition.isAfterOrEqual(selection.anchor)) {
+                return new vscode.Selection(
+                    positionUtils.left(document, selection.anchor),
+                    newPosition
+                );
+            } else {
+                return new vscode.Selection(selection.anchor, newPosition);
+            }
+        }
+    });
+}
+
+function escapeHandler(): void {
     const editor = vscode.window.activeTextEditor;
 
     if (vimState.mode === Mode.Insert) {
@@ -114,34 +117,34 @@ function escapeHandler() {
     }
 }
 
-function enterInsertMode() {
+function enterInsertMode(): void {
     vimState.mode = Mode.Insert;
     vscode.window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
     vimState.typeSubscription.dispose();
     vimState.selectionSubscription.dispose();
 }
 
-function enterNormalMode() {
+function enterNormalMode(): void {
     vimState.mode = Mode.Normal;
     vscode.window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.Underline;
 }
 
-function enterVisualMode() {
+function enterVisualMode(): void {
     vimState.mode = Mode.Visual;
     vscode.window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
 }
 
-function addSubscriptions() {
+function addSubscriptions(): void {
     vimState.typeSubscription = vscode.commands.registerCommand('type', typeHandler);
     vimState.selectionSubscription = vscode.window.onDidChangeTextEditorSelection(onSelectionChange);
 }
 
-function removeSubscriptions() {
+function removeSubscriptions(): void {
     vimState.typeSubscription.dispose();
     vimState.selectionSubscription.dispose();
 }
 
-function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent) {
+function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
     if (e.kind === undefined || e.kind === vscode.TextEditorSelectionChangeKind.Command) return;
 
     console.log('Selection changed');
@@ -165,7 +168,7 @@ function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent) {
     });
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
     console.log('Simple Vim is active!');
 
     enterNormalMode();
@@ -173,7 +176,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('extension.simpleVim.escapeKey', escapeHandler));
 }
 
-export function deactivate() {
+export function deactivate(): void {
     removeSubscriptions();
 }
 
