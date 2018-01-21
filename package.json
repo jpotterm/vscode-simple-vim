@@ -20,6 +20,13 @@
                 "command": "extension.sayHello",
                 "title": "Hello World"
             }
+        ],
+        "keybindings": [
+            {
+                "key": "Escape",
+                "command": "extension.simpleVim.escapeKey",
+                "when": "editorTextFocus"
+            }
         ]
     },
     "scripts": {
