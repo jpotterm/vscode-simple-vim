@@ -28,6 +28,12 @@ async function typeHandler(e: {text: string}): Promise<void> {
     } else if (char === 'j') {
         setDesiredColumns(editor, vimState);
         execMotion(motions.down);
+    } else if (char === 'w') {
+        execMotion(motions.wordForward);
+    } else if (char === 'b') {
+        execMotion(motions.wordBackward);
+    } else if (char === 'e') {
+        execMotion(motions.wordEnd);
     } else if (char === 'v') {
         if (vimState.mode === Mode.Visual) return;
 
