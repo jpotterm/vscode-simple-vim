@@ -51,15 +51,9 @@ function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void 
     if (vimState.mode === Mode.Normal) {
         vimState.desiredColumns = editor.selections.map(x => x.active.character);
     } else {
-        vimState.desiredColumns = editor.selections.map(x => cursorPositionFromVisual(document, x).character);
-    }
-}
-
-function cursorPositionFromVisual(document: vscode.TextDocument, selection: vscode.Selection): vscode.Position {
-    if (selection.active.isBefore(selection.anchor)) {
-        return positionUtils.rightNormal(document, selection.active);
-    } else {
-        return positionUtils.left(document, selection.active);
+        vimState.desiredColumns = editor.selections.map(function(selection) {
+            return toVimSelection(document, selection).active.character;
+        });
     }
 }
 
@@ -113,26 +107,7 @@ function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
                 vimState: vimState,
             });
 
-            let newPosition;
-            if (selection.active.isBefore(selection.anchor)) {
-                newPosition = positionUtils.left(document, motionPosition);
-            } else {
-                newPosition = positionUtils.right(document, motionPosition);
-            }
-
-            if (selection.active.isAfter(selection.anchor) && newPosition.isBeforeOrEqual(selection.anchor)) {
-                return new vscode.Selection(
-                    positionUtils.right(document, selection.anchor),
-                    newPosition
-                );
-            } else if (selection.active.isBefore(selection.anchor) && newPosition.isAfterOrEqual(selection.anchor)) {
-                return new vscode.Selection(
-                    positionUtils.left(document, selection.anchor),
-                    newPosition
-                );
-            } else {
-                return new vscode.Selection(selection.anchor, newPosition);
-            }
+            return toVscodeSelection(document, new vscode.Selection(vimSelection.anchor, motionPosition));
         }
     });
 }
