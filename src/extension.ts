@@ -23,16 +23,10 @@ async function typeHandler(e: {text: string}): Promise<void> {
         execMotion(motions.left);
         vimState.desiredColumns = [];
     } else if (char === 'k') {
-        if (vimState.desiredColumns.length === 0) {
-            vimState.desiredColumns = editor.selections.map(x => x.active.character);
-        }
-
+        setDesiredColumns(editor, vimState);
         execMotion(motions.up);
     } else if (char === 'j') {
-        if (vimState.desiredColumns.length === 0) {
-            vimState.desiredColumns = editor.selections.map(x => x.active.character);
-        }
-
+        setDesiredColumns(editor, vimState);
         execMotion(motions.down);
     } else if (char === 'v') {
         if (vimState.mode === Mode.Visual) return;
@@ -46,6 +40,54 @@ async function typeHandler(e: {text: string}): Promise<void> {
 
             return new vscode.Selection(selection.active, positionUtils.right(document, selection.active));
         });
+    }
+}
+
+function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void {
+    if (vimState.desiredColumns.length !== 0) return;
+
+    const document = editor.document;
+
+    if (vimState.mode === Mode.Normal) {
+        vimState.desiredColumns = editor.selections.map(x => x.active.character);
+    } else {
+        vimState.desiredColumns = editor.selections.map(x => cursorPositionFromVisual(document, x).character);
+    }
+}
+
+function cursorPositionFromVisual(document: vscode.TextDocument, selection: vscode.Selection): vscode.Position {
+    if (selection.active.isBefore(selection.anchor)) {
+        return positionUtils.rightNormal(document, selection.active);
+    } else {
+        return positionUtils.left(document, selection.active);
+    }
+}
+
+function toVimSelection(document: vscode.TextDocument, vscodeSelection: vscode.Selection): vscode.Selection {
+    if (vscodeSelection.active.isBefore(vscodeSelection.anchor)) {
+        return new vscode.Selection(
+            positionUtils.left(document, vscodeSelection.anchor),
+            vscodeSelection.active
+        );
+    } else {
+        return new vscode.Selection(
+            vscodeSelection.anchor,
+            positionUtils.left(document, vscodeSelection.active)
+        );
+    }
+}
+
+function toVscodeSelection(document: vscode.TextDocument, vimSelection: vscode.Selection): vscode.Selection {
+    if (vimSelection.active.isBefore(vimSelection.anchor)) {
+        return new vscode.Selection(
+            positionUtils.right(document, vimSelection.anchor),
+            vimSelection.active
+        );
+    } else {
+        return new vscode.Selection(
+            vimSelection.anchor,
+            positionUtils.right(document, vimSelection.active)
+        );
     }
 }
 
@@ -63,24 +105,18 @@ function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
             });
             return new vscode.Selection(newPosition, newPosition);
         } else if (vimState.mode === Mode.Visual) {
+            const vimSelection = toVimSelection(document, selection);
+            const motionPosition = motion({
+                document: document,
+                position: vimSelection.active,
+                selectionIndex: i,
+                vimState: vimState,
+            });
+
             let newPosition;
             if (selection.active.isBefore(selection.anchor)) {
-                const currentPosition = positionUtils.rightNormal(document, selection.active);
-                const motionPosition = motion({
-                    document: document,
-                    position: currentPosition,
-                    selectionIndex: i,
-                    vimState: vimState,
-                });
                 newPosition = positionUtils.left(document, motionPosition);
             } else {
-                const currentPosition = positionUtils.left(document, selection.active);
-                const motionPosition = motion({
-                    document: document,
-                    position: currentPosition,
-                    selectionIndex: i,
-                    vimState: vimState,
-                });
                 newPosition = positionUtils.right(document, motionPosition);
             }
 
