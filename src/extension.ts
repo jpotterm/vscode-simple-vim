@@ -16,6 +16,31 @@ async function typeHandler(e: {text: string}): Promise<void> {
     if (char === 'i') {
         enterInsertMode();
         removeSubscriptions();
+    } else if (char === 'I') {
+        editor.selections = editor.selections.map(function(selection) {
+            const newPosition = selection.active.with({ character: 0 });
+            return new vscode.Selection(newPosition, newPosition);
+        });
+
+        enterInsertMode();
+        removeSubscriptions();
+    } else if (char === 'a') {
+        editor.selections = editor.selections.map(function(selection) {
+            const newPosition = positionUtils.right(document, selection.active);
+            return new vscode.Selection(newPosition, newPosition);
+        });
+
+        enterInsertMode();
+        removeSubscriptions();
+    } else if (char === 'A') {
+        editor.selections = editor.selections.map(function(selection) {
+            const lineLength = document.lineAt(selection.active.line).text.length;
+            const newPosition = selection.active.with({ character: lineLength });
+            return new vscode.Selection(newPosition, newPosition);
+        });
+
+        enterInsertMode();
+        removeSubscriptions();
     } else if (char === 'l') {
         execMotion(motions.right);
         vimState.desiredColumns = [];
@@ -169,8 +194,14 @@ function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
 
 function escapeHandler(): void {
     const editor = vscode.window.activeTextEditor;
+    const document = editor.document;
 
     if (vimState.mode === Mode.Insert) {
+        editor.selections = editor.selections.map(function(selection) {
+            const newPosition = positionUtils.left(document, selection.active);
+            return new vscode.Selection(newPosition, newPosition);
+        });
+
         enterNormalMode();
         addSubscriptions();
     } else if (vimState.mode === Mode.Visual) {
@@ -259,8 +290,3 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
     removeSubscriptions();
 }
-
-// await vscode.commands.executeCommand('cursorMove', {
-//     to: 'right',
-//     by: 'character',
-// });
