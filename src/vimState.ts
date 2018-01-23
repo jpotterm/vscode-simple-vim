@@ -8,4 +8,5 @@ export class VimState {
     selectionSubscription: vscode.Disposable;
     mode: Mode;
     desiredColumns: number[] = [];
+    keysPressed: string[] = [];
 }

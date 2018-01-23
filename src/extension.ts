@@ -3,89 +3,246 @@ import * as vscode from 'vscode';
 
 import { Mode } from './modes';
 import { VimState } from './vimState';
+import { Action } from './action';
 import * as motions from './motions';
 import * as positionUtils from './positionUtils';
 
 const vimState = new VimState();
 
-async function typeHandler(e: {text: string}): Promise<void> {
+const actions: Action[] = [
+    // Actions
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['i']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            enterInsertMode();
+            removeSubscriptions();
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['I']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            editor.selections = editor.selections.map(function(selection) {
+                const newPosition = selection.active.with({ character: 0 });
+                return new vscode.Selection(newPosition, newPosition);
+            });
+
+            enterInsertMode();
+            removeSubscriptions();
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['a']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            editor.selections = editor.selections.map(function(selection) {
+                const newPosition = positionUtils.right(editor.document, selection.active);
+                return new vscode.Selection(newPosition, newPosition);
+            });
+
+            enterInsertMode();
+            removeSubscriptions();
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['A']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            editor.selections = editor.selections.map(function(selection) {
+                const lineLength = editor.document.lineAt(selection.active.line).text.length;
+                const newPosition = selection.active.with({ character: lineLength });
+                return new vscode.Selection(newPosition, newPosition);
+            });
+
+            enterInsertMode();
+            removeSubscriptions();
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return vimState.mode !== Mode.Visual && arrayEquals(keysPressed, ['v']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            enterVisualMode();
+
+            editor.selections = editor.selections.map(function(selection) {
+                const lineLength = editor.document.lineAt(selection.active.line).text.length;
+
+                if (lineLength === 0) return selection;
+
+                return new vscode.Selection(selection.active, positionUtils.right(editor.document, selection.active));
+            });
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return vimState.mode !== Mode.VisualLine && arrayEquals(keysPressed, ['V']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            enterVisualLineMode();
+
+            editor.selections = editor.selections.map(function(selection) {
+                const lineLength = editor.document.lineAt(selection.active.line).text.length;
+
+                if (lineLength === 0) return selection;
+
+                return new vscode.Selection(
+                    selection.active.with({ character: 0 }),
+                    selection.active.with({ character: lineLength })
+                );
+            });
+        },
+    },
+
+    // Operators
+    // {
+    //     couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+    //         return false;
+    //     },
+    //     doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+    //         return arrayEquals(keysPressed, ['l']);
+    //     },
+    //     exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+    //         execMotion(motions.right);
+    //         vimState.desiredColumns = [];
+    //     },
+    // },
+
+    // Motions
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['l']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            execMotion(motions.right);
+            vimState.desiredColumns = [];
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['h']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            execMotion(motions.left);
+            vimState.desiredColumns = [];
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['k']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            setDesiredColumns(editor, vimState);
+            execMotion(motions.up);
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['j']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            setDesiredColumns(editor, vimState);
+            execMotion(motions.down);
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['w']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            execMotion(motions.wordForward);
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['b']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            execMotion(motions.wordBackward);
+        },
+    },
+    {
+        couldApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return false;
+        },
+        doesApply: function(vimState: VimState, keysPressed: string[]): boolean {
+            return arrayEquals(keysPressed, ['e']);
+        },
+        exec: function(vimState: VimState, keysPressed: string[], editor: vscode.TextEditor): void {
+            execMotion(motions.wordEnd);
+        },
+    },
+];
+
+function arrayEquals(xs: any[], ys: any[]) {
+    if (xs.length !== ys.length) {
+        return false;
+    }
+
+    for (let i = 0; i < xs.length; ++i) {
+        if (xs[i] !== ys[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+async function typeHandler(e: { text: string }): Promise<void> {
     const char = e.text;
     const editor = vscode.window.activeTextEditor;
-    const document = editor.document;
 
-    if (char === 'i') {
-        enterInsertMode();
-        removeSubscriptions();
-    } else if (char === 'I') {
-        editor.selections = editor.selections.map(function(selection) {
-            const newPosition = selection.active.with({ character: 0 });
-            return new vscode.Selection(newPosition, newPosition);
-        });
+    vimState.keysPressed.push(char);
 
-        enterInsertMode();
-        removeSubscriptions();
-    } else if (char === 'a') {
-        editor.selections = editor.selections.map(function(selection) {
-            const newPosition = positionUtils.right(document, selection.active);
-            return new vscode.Selection(newPosition, newPosition);
-        });
+    const actionDoes = actions.find(x => x.doesApply(vimState, vimState.keysPressed));
+    const actionCould = actions.find(x => x.couldApply(vimState, vimState.keysPressed));
 
-        enterInsertMode();
-        removeSubscriptions();
-    } else if (char === 'A') {
-        editor.selections = editor.selections.map(function(selection) {
-            const lineLength = document.lineAt(selection.active.line).text.length;
-            const newPosition = selection.active.with({ character: lineLength });
-            return new vscode.Selection(newPosition, newPosition);
-        });
-
-        enterInsertMode();
-        removeSubscriptions();
-    } else if (char === 'l') {
-        execMotion(motions.right);
-        vimState.desiredColumns = [];
-    } else if (char === 'h') {
-        execMotion(motions.left);
-        vimState.desiredColumns = [];
-    } else if (char === 'k') {
-        setDesiredColumns(editor, vimState);
-        execMotion(motions.up);
-    } else if (char === 'j') {
-        setDesiredColumns(editor, vimState);
-        execMotion(motions.down);
-    } else if (char === 'w') {
-        execMotion(motions.wordForward);
-    } else if (char === 'b') {
-        execMotion(motions.wordBackward);
-    } else if (char === 'e') {
-        execMotion(motions.wordEnd);
-    } else if (char === 'v') {
-        if (vimState.mode === Mode.Visual) return;
-
-        enterVisualMode();
-
-        editor.selections = editor.selections.map(function(selection) {
-            const lineLength = editor.document.lineAt(selection.active.line).text.length;
-
-            if (lineLength === 0) return selection;
-
-            return new vscode.Selection(selection.active, positionUtils.right(document, selection.active));
-        });
-    } else if (char === 'V') {
-        if (vimState.mode === Mode.VisualLine) return;
-
-        enterVisualLineMode();
-
-        editor.selections = editor.selections.map(function(selection) {
-            const lineLength = editor.document.lineAt(selection.active.line).text.length;
-
-            if (lineLength === 0) return selection;
-
-            return new vscode.Selection(
-                selection.active.with({ character: 0 }),
-                selection.active.with({ character: lineLength })
-            );
-        });
+    if (actionDoes) {
+        actionDoes.exec(vimState, vimState.keysPressed, editor);
+        vimState.keysPressed = [];
+    } else if (!actionCould) {
+        vimState.keysPressed = [];
     }
 }
 
