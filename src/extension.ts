@@ -46,6 +46,21 @@ async function typeHandler(e: {text: string}): Promise<void> {
 
             return new vscode.Selection(selection.active, positionUtils.right(document, selection.active));
         });
+    } else if (char === 'V') {
+        if (vimState.mode === Mode.VisualLine) return;
+
+        enterVisualLineMode();
+
+        editor.selections = editor.selections.map(function(selection) {
+            const lineLength = editor.document.lineAt(selection.active.line).text.length;
+
+            if (lineLength === 0) return selection;
+
+            return new vscode.Selection(
+                selection.active.with({ character: 0 }),
+                selection.active.with({ character: lineLength })
+            );
+        });
     }
 }
 
@@ -58,12 +73,12 @@ function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void 
         vimState.desiredColumns = editor.selections.map(x => x.active.character);
     } else {
         vimState.desiredColumns = editor.selections.map(function(selection) {
-            return toVimSelection(document, selection).active.character;
+            return vscodeToVimVisualSelection(document, selection).active.character;
         });
     }
 }
 
-function toVimSelection(document: vscode.TextDocument, vscodeSelection: vscode.Selection): vscode.Selection {
+function vscodeToVimVisualSelection(document: vscode.TextDocument, vscodeSelection: vscode.Selection): vscode.Selection {
     if (vscodeSelection.active.isBefore(vscodeSelection.anchor)) {
         return new vscode.Selection(
             positionUtils.left(document, vscodeSelection.anchor),
@@ -77,7 +92,7 @@ function toVimSelection(document: vscode.TextDocument, vscodeSelection: vscode.S
     }
 }
 
-function toVscodeSelection(document: vscode.TextDocument, vimSelection: vscode.Selection): vscode.Selection {
+function vimToVscodeVisualSelection(document: vscode.TextDocument, vimSelection: vscode.Selection): vscode.Selection {
     if (vimSelection.active.isBefore(vimSelection.anchor)) {
         return new vscode.Selection(
             positionUtils.right(document, vimSelection.anchor),
@@ -87,6 +102,30 @@ function toVscodeSelection(document: vscode.TextDocument, vimSelection: vscode.S
         return new vscode.Selection(
             vimSelection.anchor,
             positionUtils.right(document, vimSelection.active)
+        );
+    }
+}
+
+function vscodeToVimVisualLineSelection(document: vscode.TextDocument, vscodeSelection: vscode.Selection): vscode.Selection {
+    return new vscode.Selection(
+        vscodeSelection.anchor.with({ character: 0 }),
+        vscodeSelection.active.with({ character: 0 }),
+    );
+}
+
+function vimToVscodeVisualLineSelection(document: vscode.TextDocument, vimSelection: vscode.Selection): vscode.Selection {
+    const anchorLineLength = document.lineAt(vimSelection.anchor.line).text.length;
+    const activeLineLength = document.lineAt(vimSelection.active.line).text.length;
+
+    if (vimSelection.active.isBefore(vimSelection.anchor)) {
+        return new vscode.Selection(
+            vimSelection.anchor.with({ character: anchorLineLength }),
+            vimSelection.active.with({ character: 0 })
+        );
+    } else {
+        return new vscode.Selection(
+            vimSelection.anchor.with({ character: 0 }),
+            vimSelection.active.with({ character: activeLineLength })
         );
     }
 }
@@ -105,7 +144,7 @@ function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
             });
             return new vscode.Selection(newPosition, newPosition);
         } else if (vimState.mode === Mode.Visual) {
-            const vimSelection = toVimSelection(document, selection);
+            const vimSelection = vscodeToVimVisualSelection(document, selection);
             const motionPosition = motion({
                 document: document,
                 position: vimSelection.active,
@@ -113,7 +152,17 @@ function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
                 vimState: vimState,
             });
 
-            return toVscodeSelection(document, new vscode.Selection(vimSelection.anchor, motionPosition));
+            return vimToVscodeVisualSelection(document, new vscode.Selection(vimSelection.anchor, motionPosition));
+        } else if (vimState.mode === Mode.VisualLine) {
+            const vimSelection = vscodeToVimVisualLineSelection(document, selection);
+            const motionPosition = motion({
+                document: document,
+                position: vimSelection.active,
+                selectionIndex: i,
+                vimState: vimState,
+            });
+
+            return vimToVscodeVisualLineSelection(document, new vscode.Selection(vimSelection.anchor, motionPosition));
         }
     });
 }
@@ -127,6 +176,15 @@ function escapeHandler(): void {
     } else if (vimState.mode === Mode.Visual) {
         editor.selections = editor.selections.map(function(selection) {
             const newPosition = new vscode.Position(selection.active.line, Math.max(selection.active.character - 1, 0));
+            return new vscode.Selection(newPosition, newPosition);
+        });
+
+        enterNormalMode();
+    }  else if (vimState.mode === Mode.VisualLine) {
+        editor.selections = editor.selections.map(function(selection) {
+            const newPosition = selection.active.with({
+                character: Math.max(selection.active.character - 1, 0)
+            });
             return new vscode.Selection(newPosition, newPosition);
         });
 
@@ -148,6 +206,11 @@ function enterNormalMode(): void {
 
 function enterVisualMode(): void {
     vimState.mode = Mode.Visual;
+    vscode.window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
+}
+
+function enterVisualLineMode(): void {
+    vimState.mode = Mode.VisualLine;
     vscode.window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
 }
 
