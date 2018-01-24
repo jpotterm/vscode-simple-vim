@@ -51,40 +51,6 @@ export function down({ document, position, selectionIndex, vimState }: MotionArg
 
 const NON_WORD_CHARACTERS = '/\\()"\':,.;<>~!@#$%^&*|+=[]{}`?-';
 
-// function nextIndexOfWord(text: string, fromIndex: number): number {
-//     if (text[fromIndex] === ' ' || text[fromIndex] === '\t') {
-//         return indexOfNonWhitespace(text, fromIndex);
-//     } else if (NON_WORD_CHARACTERS.indexOf(text[fromIndex])) {
-//         for (let i = fromIndex + 1; i < text.length; ++i) {
-//             if (text[i] === ' ' || text[i] === '\t') {
-//                 return indexOfNonWhitespace(text, i);
-//             } else if (!NON_WORD_CHARACTERS.indexOf(text[i])) {
-//                 return i;
-//             }
-//         }
-//     } else {
-//         for (let i = fromIndex + 1; i < text.length; ++i) {
-//             if (text[i] === ' ' || text[i] === '\t') {
-//                 return indexOfNonWhitespace(text, i + 1);
-//             } else if (NON_WORD_CHARACTERS.indexOf(text[i])) {
-//                 return i;
-//             }
-//         }
-//     }
-
-//     return -1;
-// }
-
-// function indexOfNonWhitespace(text: string, fromIndex: number): number {
-//     for (let i = fromIndex; i < text.length; ++i) {
-//         if (text[i] !== ' ' && text[i] !== '\t') {
-//             return i;
-//         }
-//     }
-
-//     return -1;
-// }
-
 function wordRanges(text: string): { start: number, end: number }[] {
     enum State {
         Whitespace,
@@ -93,7 +59,7 @@ function wordRanges(text: string): { start: number, end: number }[] {
     }
 
     let state = State.Whitespace;
-    let startIndex;
+    let startIndex = 0;
     const ranges = [];
 
     for (let i = 0; i < text.length; ++i) {
@@ -156,40 +122,6 @@ function isWhitespaceCharacter(char: string): boolean {
 function isWordCharacter(char: string): boolean {
     return !isWhitespaceCharacter(char) && !isNonWordCharacter(char);
 }
-
-// function previousIndexOfWord(text: string, fromIndex: number): number {
-//     if (text[fromIndex] === ' ' || text[fromIndex] === '\t') {
-//         return lastIndexOfNonWhitespace(text, fromIndex);
-//     } else if (NON_WORD_CHARACTERS.indexOf(text[fromIndex])) {
-//         for (let i = fromIndex - 1; i >= 0; --i) {
-//             if (text[i] === ' ' || text[i] === '\t') {
-//                 return lastIndexOfNonWhitespace(text, i);
-//             } else if (!NON_WORD_CHARACTERS.indexOf(text[i])) {
-//                 return i;
-//             }
-//         }
-//     } else {
-//         for (let i = fromIndex - 1; i >= 0; --i) {
-//             if (text[i] === ' ' || text[i] === '\t') {
-//                 return lastIndexOfNonWhitespace(text, i - 1);
-//             } else if (NON_WORD_CHARACTERS.indexOf(text[i])) {
-//                 return i;
-//             }
-//         }
-//     }
-
-//     return -1;
-// }
-
-// function lastIndexOfNonWhitespace(text: string, fromIndex: number): number {
-//     for (let i = fromIndex; i >= 0; --i) {
-//         if (text[i] !== ' ' && text[i] !== '\t') {
-//             return i;
-//         }
-//     }
-
-//     return -1;
-// }
 
 export function wordForward({ document, position }: MotionArgs): vscode.Position {
     const lineText = document.lineAt(position.line).text;
