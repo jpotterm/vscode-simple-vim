@@ -4,12 +4,54 @@ import * as vscode from 'vscode';
 import { Mode } from './modes';
 import { VimState } from './vimState';
 import { Action } from './action';
-import { OperatorMotion, Operator, parseOperator } from './operators';
-import { ParseKeys, parseKeysExact, parseKeysWithRest, ParseKeysResult, ParseKeysStatus } from './parseKeys';
+import { ParseKeys, parseKeysExact, ParseKeysStatus, parseKeysOperator, parseOperatorAll } from './parseKeys';
 import * as motions from './motions';
+import * as operators from './operators';
 import * as positionUtils from './positionUtils';
+import { OperatorMotion } from './operators';
 
 const vimState = new VimState();
+
+const operatorMotions: (OperatorMotion & ParseKeys)[] = [
+    {
+        parseKeys: parseKeysExact(['l']),
+        exec: function(vimState, keys, document, position) {
+            return new vscode.Range(position, positionUtils.right(document, position));
+        },
+    },
+    {
+        parseKeys: parseKeysExact(['h']),
+        exec: function(vimState: VimState, keys: string[], document: vscode.TextDocument, position: vscode.Position): vscode.Range {
+            return new vscode.Range(position, positionUtils.left(document, position));
+        },
+    },
+    {
+        parseKeys: parseKeysExact(['k']),
+        exec: function(vimState: VimState, keys: string[], document: vscode.TextDocument, position: vscode.Position): vscode.Range {
+            if (position.line === 0) {
+                return new vscode.Range(position, position);
+            }
+
+            return new vscode.Range(
+                new vscode.Position(position.line - 1, 0),
+                positionUtils.lineEnd(document, position)
+            );
+        },
+    },
+    {
+        parseKeys: parseKeysExact(['j']),
+        exec: function(vimState: VimState, keys: string[], document: vscode.TextDocument, position: vscode.Position): vscode.Range {
+            if (position.line === document.lineCount - 1) {
+                return new vscode.Range(position, position);
+            }
+
+            return new vscode.Range(
+                new vscode.Position(position.line, 0),
+                positionUtils.lineEnd(document, position.with({ line: position.line + 1 }))
+            );
+        },
+    },
+];
 
 const actions: (Action & ParseKeys)[] = [
     // Actions
@@ -139,23 +181,9 @@ const actions: (Action & ParseKeys)[] = [
 
     // Operators
     {
-        parseKeys: function(vimState: VimState, keys: string[]): ParseKeysResult {
-            const result = parseOperator(vimState, keys);
-
-            if (result.kind === 'success') {
-                return {
-                    status: ParseKeysStatus.YES,
-                    rest: [],
-                };
-            } else {
-                return {
-                    status: result.status,
-                    rest: [],
-                };
-            }
-        },
+        parseKeys: parseKeysOperator(['d'], operatorMotions),
         exec: function(vimState: VimState, keys: string[], editor: vscode.TextEditor): void {
-            const result = parseOperator(vimState, keys);
+            const result = parseOperatorAll(vimState, keys, ['d'], operatorMotions);
 
             if (result.kind === 'failure') {
                 return;
@@ -169,10 +197,69 @@ const actions: (Action & ParseKeys)[] = [
                     range = selection;
                 }
 
-                result.operator.exec(vimState, keys, editor, range);
+                operators.delete_(vimState, editor, range);
             });
         },
     },
+    {
+        parseKeys: parseKeysOperator(['c'], operatorMotions),
+        exec: function(vimState: VimState, keys: string[], editor: vscode.TextEditor): void {
+            const result = parseOperatorAll(vimState, keys, ['c'], operatorMotions);
+
+            if (result.kind === 'failure') {
+                return;
+            }
+
+            editor.selections.forEach(function(selection) {
+                let range;
+                if (vimState.mode === Mode.Normal && result.motion) {
+                    range = result.motion.exec(vimState, keys, editor.document, selection.active);
+                } else {
+                    range = selection;
+                }
+
+                operators.change(vimState, editor, range);
+            });
+
+            enterInsertMode();
+        },
+    },
+
+    // {
+    //     parseKeys: function(vimState: VimState, keys: string[]): ParseKeysResult {
+    //         const result = parseOperator(vimState, keys);
+
+    //         if (result.kind === 'success') {
+    //             return {
+    //                 status: ParseKeysStatus.YES,
+    //                 rest: [],
+    //             };
+    //         } else {
+    //             return {
+    //                 status: result.status,
+    //                 rest: [],
+    //             };
+    //         }
+    //     },
+    //     exec: function(vimState: VimState, keys: string[], editor: vscode.TextEditor): void {
+    //         const result = parseOperator(vimState, keys);
+
+    //         if (result.kind === 'failure') {
+    //             return;
+    //         }
+
+    //         editor.selections.forEach(function(selection) {
+    //             let range;
+    //             if (vimState.mode === Mode.Normal && result.motion) {
+    //                 range = result.motion.exec(vimState, keys, editor.document, selection.active);
+    //             } else {
+    //                 range = selection;
+    //             }
+
+    //             result.operator.exec(vimState, keys, editor, range);
+    //         });
+    //     },
+    // },
 ];
 
 async function typeHandler(e: { text: string }): Promise<void> {
@@ -184,11 +271,11 @@ async function typeHandler(e: { text: string }): Promise<void> {
     vimState.keysPressed.push(char);
 
     const actionDoes = actions.find(
-        x => x.parseKeys(vimState, vimState.keysPressed).status === ParseKeysStatus.YES
+        x => x.parseKeys(vimState, vimState.keysPressed) === ParseKeysStatus.YES
     );
 
     const actionCould = actions.find(
-        x => x.parseKeys(vimState, vimState.keysPressed).status === ParseKeysStatus.MORE_INPUT
+        x => x.parseKeys(vimState, vimState.keysPressed) === ParseKeysStatus.MORE_INPUT
     );
 
     if (actionDoes) {
