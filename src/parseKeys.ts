@@ -1,21 +1,13 @@
 'use strict';
+import * as vscode from 'vscode';
+
 import { VimState } from './vimState';
 import { Mode } from './modes';
-import { OperatorMotion } from './operators';
+import { ParseKeysStatus, OperatorMotion, ParseFailure, ParseRegisterPartSuccess, ParseCountPartSuccess, ParseOperatorPartSuccess, ParseOperatorMotionPartSuccess, ParseOperatorMotionSuccess } from './parseKeysTypes';
+import { Action } from './actionTypes';
 
-export enum ParseKeysStatus {
-    YES,
-    NO,
-    MORE_INPUT,
-}
 
-type ParseKeysFunction = (vimState: VimState, keys: string[]) => ParseKeysStatus;
-
-export interface ParseKeys {
-    parseKeys: ParseKeysFunction;
-}
-
-function arrayStartsWith<T>(prefix: T[], xs: T[]) {
+export function arrayStartsWith<T>(prefix: T[], xs: T[]) {
     if (xs.length < prefix.length) {
         return false;
     }
@@ -29,7 +21,7 @@ function arrayStartsWith<T>(prefix: T[], xs: T[]) {
     return true;
 }
 
-function arrayEquals<T>(xs: T[], ys: T[]) {
+export function arrayEquals<T>(xs: T[], ys: T[]) {
     if (xs.length !== ys.length) {
         return false;
     }
@@ -43,34 +35,28 @@ function arrayEquals<T>(xs: T[], ys: T[]) {
     return true;
 }
 
-export function parseKeysExact(matchKeys: string[], modes?: Mode[]): ParseKeysFunction {
-    return function(vimState, keys) {
+export function parseKeysExact(
+    matchKeys: string[],
+    modes: Mode[],
+    action: (vimState: VimState, editor: vscode.TextEditor) => void,
+): Action {
+    return function(vimState, keys, editor) {
         if (modes && modes.indexOf(vimState.mode) < 0) {
             return ParseKeysStatus.NO;
         }
 
         if (arrayEquals(keys, matchKeys)) {
+            action(vimState, editor);
             return ParseKeysStatus.YES;
         } else if (arrayStartsWith(keys, matchKeys)) {
             return ParseKeysStatus.MORE_INPUT;
         } else {
             return ParseKeysStatus.NO;
         }
-    }
+    };
 }
 
-type ParseFailure = {
-    kind: 'failure';
-    status: ParseKeysStatus;
-};
-
-type ParseRegisterSuccess = {
-    kind: 'success';
-    register: string;
-    rest: string[];
-};
-
-function parseRegister(keys: string[]): ParseFailure | ParseRegisterSuccess {
+function parseRegisterPart(keys: string[]): ParseFailure | ParseRegisterPartSuccess {
     if (keys[0] === '"') {
         if (keys.length < 2) {
             return {
@@ -93,13 +79,7 @@ function parseRegister(keys: string[]): ParseFailure | ParseRegisterSuccess {
     };
 }
 
-type ParseCountSuccess = {
-    kind: 'success';
-    count: number;
-    rest: string[];
-};
-
-function parseCount(keys: string[]): ParseCountSuccess {
+function parseCountPart(keys: string[]): ParseCountPartSuccess {
     const match = keys.join('').match(/^\d+/);
 
     if (match) {
@@ -117,12 +97,7 @@ function parseCount(keys: string[]): ParseCountSuccess {
     }
 }
 
-type ParseOperatorSuccess = {
-    kind: 'success';
-    rest: string[];
-};
-
-function parseOperator(keys: string[], operatorKeys: string[]): ParseFailure | ParseOperatorSuccess {
+function parseOperatorPart(keys: string[], operatorKeys: string[]): ParseFailure | ParseOperatorPartSuccess {
     if (arrayStartsWith(operatorKeys, keys)) {
         return {
             kind: 'success',
@@ -141,125 +116,147 @@ function parseOperator(keys: string[], operatorKeys: string[]): ParseFailure | P
     }
 }
 
-type ParseOperatorMotionSuccess = {
-    kind: 'success';
-    motion: OperatorMotion;
-};
-
-function parseOperatorMotion(
+function parseOperatorMotionPart(
     vimState: VimState,
     keys: string[],
-    motions: (OperatorMotion & ParseKeys)[]
+    editor: vscode.TextEditor,
+    motions: OperatorMotion[]
 ): ParseFailure | ParseOperatorMotionSuccess {
-    const motionDoes = motions.find(
-        x => x.parseKeys(vimState, keys) === ParseKeysStatus.YES
-    );
+    let could = false;
+    for (let motion of motions) {
+        const result = motion(vimState, vimState.keysPressed, editor);
 
-    if (motionDoes) {
+        if (result.kind === 'success') {
+            return result;
+        } else if (result.status === ParseKeysStatus.MORE_INPUT) {
+            could = true;
+        }
+    }
+
+    if (could) {
         return {
-            kind: 'success',
-            motion: motionDoes,
+            kind: 'failure',
+            status: ParseKeysStatus.MORE_INPUT,
         };
     } else {
-        const motionCould = motions.find(
-            x => x.parseKeys(vimState, keys) === ParseKeysStatus.MORE_INPUT
-        );
-
-        if (motionCould) {
-            return {
-                kind: 'failure',
-                status: ParseKeysStatus.MORE_INPUT,
-            };
-        } else {
-            return {
-                kind: 'failure',
-                status: ParseKeysStatus.NO,
-            };
-        }
+        return {
+            kind: 'failure',
+            status: ParseKeysStatus.NO,
+        };
     }
 }
 
-export type ParseOperatorAllSuccess = {
-    kind: 'success';
-    register: string;
-    count: number;
-    motion: OperatorMotion | undefined;
-};
+// export function parseOperatorAll(
+//     vimState: VimState,
+//     keys: string[],
+//     operatorKeys: string[],
+//     motions: (OperatorMotion & ParseKeys)[]
+// ): ParseFailure | ParseOperatorAllSuccess {
+//     const registerResult = parseRegister(keys);
+//     if (registerResult.kind === 'failure') {
+//         return {
+//             kind: 'failure',
+//             status: registerResult.status,
+//         };
+//     }
 
-export function parseOperatorAll(
-    vimState: VimState,
-    keys: string[],
+//     if (registerResult.rest.length === 0) {
+//         return {
+//             kind: 'failure',
+//             status: ParseKeysStatus.MORE_INPUT,
+//         };
+//     }
+
+//     const countResult = parseCount(registerResult.rest);
+
+//     if (countResult.rest.length === 0) {
+//         return {
+//             kind: 'failure',
+//             status: ParseKeysStatus.MORE_INPUT,
+//         };
+//     }
+
+//     const operatorResult = parseOperator(countResult.rest, operatorKeys);
+//     if (operatorResult.kind === 'failure') {
+//         return {
+//             kind: 'failure',
+//             status: operatorResult.status,
+//         };
+//     }
+
+//     let motion;
+//     if (vimState.mode === Mode.Normal) {
+//         if (operatorResult.rest.length === 0) {
+//             return {
+//                 kind: 'failure',
+//                 status: ParseKeysStatus.MORE_INPUT,
+//             };
+//         }
+
+//         const motionResult = parseOperatorMotion(vimState, operatorResult.rest, motions);
+//         if (motionResult.kind === 'failure') {
+//             return {
+//                 kind: 'failure',
+//                 status: motionResult.status,
+//             };
+//         }
+
+//         motion = motionResult.motion;
+//     }
+
+//     return {
+//         kind: 'success',
+//         register: registerResult.register,
+//         count: countResult.count,
+//         motion: motion,
+//     };
+// }
+
+export function parseKeysOperator(
     operatorKeys: string[],
-    motions: (OperatorMotion & ParseKeys)[]
-): ParseFailure | ParseOperatorAllSuccess {
-    const registerResult = parseRegister(keys);
-    if (registerResult.kind === 'failure') {
-        return {
-            kind: 'failure',
-            status: registerResult.status,
-        };
-    }
-
-    if (registerResult.rest.length === 0) {
-        return {
-            kind: 'failure',
-            status: ParseKeysStatus.MORE_INPUT,
-        };
-    }
-
-    const countResult = parseCount(registerResult.rest);
-
-    if (countResult.rest.length === 0) {
-        return {
-            kind: 'failure',
-            status: ParseKeysStatus.MORE_INPUT,
-        };
-    }
-
-    const operatorResult = parseOperator(countResult.rest, operatorKeys);
-    if (operatorResult.kind === 'failure') {
-        return {
-            kind: 'failure',
-            status: operatorResult.status,
-        };
-    }
-
-    let motion;
-    if (vimState.mode === Mode.Normal) {
-        if (operatorResult.rest.length === 0) {
-            return {
-                kind: 'failure',
-                status: ParseKeysStatus.MORE_INPUT,
-            };
+    motions: OperatorMotion[],
+    operator: (vimState: VimState, editor: vscode.TextEditor, register: string, count: number, ranges: vscode.Range[]) => void
+): Action {
+    return function(vimState, keys, editor) {
+        const registerResult = parseRegisterPart(keys);
+        if (registerResult.kind === 'failure') {
+            return registerResult.status;
         }
 
-        const motionResult = parseOperatorMotion(vimState, operatorResult.rest, motions);
-        if (motionResult.kind === 'failure') {
-            return {
-                kind: 'failure',
-                status: motionResult.status,
-            };
+        if (registerResult.rest.length === 0) {
+            return ParseKeysStatus.MORE_INPUT;
         }
 
-        motion = motionResult.motion;
-    }
+        const countResult = parseCountPart(registerResult.rest);
 
-    return {
-        kind: 'success',
-        register: registerResult.register,
-        count: countResult.count,
-        motion: motion,
-    };
-}
+        if (countResult.rest.length === 0) {
+            return ParseKeysStatus.MORE_INPUT;
+        }
 
-export function parseKeysOperator(operatorKeys: string[], motions: (OperatorMotion & ParseKeys)[]): ParseKeysFunction {
-    return function(vimState, keys) {
-        const result = parseOperatorAll(vimState, keys, operatorKeys, motions);
+        const operatorResult = parseOperatorPart(countResult.rest, operatorKeys);
+        if (operatorResult.kind === 'failure') {
+            return operatorResult.status;
+        }
 
-        if (result.kind === 'failure') {
-            return result.status;
+        let ranges;
+        if (vimState.mode === Mode.Normal) {
+            if (operatorResult.rest.length === 0) {
+                return ParseKeysStatus.MORE_INPUT;
+            }
+
+            const motionResult = parseOperatorMotionPart(vimState, operatorResult.rest, editor, motions);
+            if (motionResult.kind === 'failure') {
+                return motionResult.status;
+            }
+
+            ranges = editor.selections.map(function(selection) {
+                return motionResult.motion.exec(vimState, keys, editor.document, selection.active);
+            });
         } else {
-            return ParseKeysStatus.YES;
+            ranges = editor.selections;
         }
+
+        operator(vimState, editor, registerResult.register, countResult.count, ranges);
+        return ParseKeysStatus.YES;
     };
 }
