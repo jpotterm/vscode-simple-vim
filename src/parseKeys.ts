@@ -3,7 +3,15 @@ import * as vscode from 'vscode';
 
 import { VimState } from './vimState';
 import { Mode } from './modes';
-import { ParseKeysStatus, OperatorMotion, ParseFailure, ParseRegisterPartSuccess, ParseCountPartSuccess, ParseOperatorPartSuccess, ParseOperatorMotionPartSuccess, ParseOperatorMotionSuccess } from './parseKeysTypes';
+import {
+    ParseKeysStatus,
+    OperatorMotion,
+    ParseFailure,
+    ParseRegisterPartSuccess,
+    ParseCountPartSuccess,
+    ParseOperatorPartSuccess,
+    ParseOperatorMotionSuccess
+} from './parseKeysTypes';
 import { Action } from './actionTypes';
 
 
@@ -124,7 +132,7 @@ function parseOperatorMotionPart(
 ): ParseFailure | ParseOperatorMotionSuccess {
     let could = false;
     for (let motion of motions) {
-        const result = motion(vimState, vimState.keysPressed, editor);
+        const result = motion(vimState, keys, editor);
 
         if (result.kind === 'success') {
             return result;
@@ -145,72 +153,6 @@ function parseOperatorMotionPart(
         };
     }
 }
-
-// export function parseOperatorAll(
-//     vimState: VimState,
-//     keys: string[],
-//     operatorKeys: string[],
-//     motions: (OperatorMotion & ParseKeys)[]
-// ): ParseFailure | ParseOperatorAllSuccess {
-//     const registerResult = parseRegister(keys);
-//     if (registerResult.kind === 'failure') {
-//         return {
-//             kind: 'failure',
-//             status: registerResult.status,
-//         };
-//     }
-
-//     if (registerResult.rest.length === 0) {
-//         return {
-//             kind: 'failure',
-//             status: ParseKeysStatus.MORE_INPUT,
-//         };
-//     }
-
-//     const countResult = parseCount(registerResult.rest);
-
-//     if (countResult.rest.length === 0) {
-//         return {
-//             kind: 'failure',
-//             status: ParseKeysStatus.MORE_INPUT,
-//         };
-//     }
-
-//     const operatorResult = parseOperator(countResult.rest, operatorKeys);
-//     if (operatorResult.kind === 'failure') {
-//         return {
-//             kind: 'failure',
-//             status: operatorResult.status,
-//         };
-//     }
-
-//     let motion;
-//     if (vimState.mode === Mode.Normal) {
-//         if (operatorResult.rest.length === 0) {
-//             return {
-//                 kind: 'failure',
-//                 status: ParseKeysStatus.MORE_INPUT,
-//             };
-//         }
-
-//         const motionResult = parseOperatorMotion(vimState, operatorResult.rest, motions);
-//         if (motionResult.kind === 'failure') {
-//             return {
-//                 kind: 'failure',
-//                 status: motionResult.status,
-//             };
-//         }
-
-//         motion = motionResult.motion;
-//     }
-
-//     return {
-//         kind: 'success',
-//         register: registerResult.register,
-//         count: countResult.count,
-//         motion: motion,
-//     };
-// }
 
 export function parseKeysOperator(
     operatorKeys: string[],
@@ -249,14 +191,40 @@ export function parseKeysOperator(
                 return motionResult.status;
             }
 
-            ranges = editor.selections.map(function(selection) {
-                return motionResult.motion.exec(vimState, keys, editor.document, selection.active);
-            });
+            ranges = motionResult.ranges;
         } else {
             ranges = editor.selections;
         }
 
         operator(vimState, editor, registerResult.register, countResult.count, ranges);
         return ParseKeysStatus.YES;
+    };
+}
+
+
+export function createOperatorMotionExactKeys(
+    matchKeys: string[],
+    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range
+): OperatorMotion {
+    return function(vimState, keys, editor) {
+        if (arrayEquals(keys, matchKeys)) {
+            const ranges = editor.selections.map(function(selection) {
+                return f(vimState, editor.document, selection.active);
+            });
+            return {
+                kind: 'success',
+                ranges: ranges,
+            };
+        } else if (arrayStartsWith(keys, matchKeys)) {
+            return {
+                kind: 'failure',
+                status: ParseKeysStatus.MORE_INPUT,
+            };
+        } else {
+            return {
+                kind: 'failure',
+                status: ParseKeysStatus.NO,
+            };
+        }
     };
 }

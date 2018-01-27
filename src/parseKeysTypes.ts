@@ -30,11 +30,6 @@ export type ParseOperatorPartSuccess = {
     rest: string[];
 };
 
-// export type ParseOperatorMotionPartSuccess = {
-//     kind: 'success';
-//     motion: OperatorMotion;
-// };
-
 export type ParseOperatorMotionSuccess = {
     kind: 'success';
     ranges: vscode.Range[];

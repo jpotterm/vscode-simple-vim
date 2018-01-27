@@ -4,55 +4,42 @@ import * as vscode from 'vscode';
 import { Mode } from './modes';
 import { VimState } from './vimState';
 import { Action } from './actionTypes';
-import { parseKeysExact } from './parseKeys';
-import { ParseKeysStatus } from './parseKeysTypes';
+import { parseKeysExact, parseKeysOperator, createOperatorMotionExactKeys } from './parseKeys';
+import { ParseKeysStatus, OperatorMotion } from './parseKeysTypes';
 import * as motions from './motions';
 import * as operators from './operators';
 import * as positionUtils from './positionUtils';
-import { OperatorMotion } from './operators';
 
 const vimState = new VimState();
 
-// const operatorMotions: (OperatorMotion & ParseKeys)[] = [
-//     {
-//         parseKeys: parseKeysExact(['l']),
-//         exec: function(vimState, keys, document, position) {
-//             return new vscode.Range(position, positionUtils.right(document, position));
-//         },
-//     },
-//     {
-//         parseKeys: parseKeysExact(['h']),
-//         exec: function(vimState: VimState, keys: string[], document: vscode.TextDocument, position: vscode.Position): vscode.Range {
-//             return new vscode.Range(position, positionUtils.left(document, position));
-//         },
-//     },
-//     {
-//         parseKeys: parseKeysExact(['k']),
-//         exec: function(vimState: VimState, keys: string[], document: vscode.TextDocument, position: vscode.Position): vscode.Range {
-//             if (position.line === 0) {
-//                 return new vscode.Range(position, position);
-//             }
+const operatorMotions: OperatorMotion[] = [
+    createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
+        return new vscode.Range(position, positionUtils.right(document, position));
+    }),
+    createOperatorMotionExactKeys(['h'], function(vimState, document, position) {
+        return new vscode.Range(position, positionUtils.left(document, position));
+    }),
+    createOperatorMotionExactKeys(['k'], function(vimState, document, position) {
+        if (position.line === 0) {
+            return new vscode.Range(position, position);
+        }
 
-//             return new vscode.Range(
-//                 new vscode.Position(position.line - 1, 0),
-//                 positionUtils.lineEnd(document, position)
-//             );
-//         },
-//     },
-//     {
-//         parseKeys: parseKeysExact(['j']),
-//         exec: function(vimState: VimState, keys: string[], document: vscode.TextDocument, position: vscode.Position): vscode.Range {
-//             if (position.line === document.lineCount - 1) {
-//                 return new vscode.Range(position, position);
-//             }
+        return new vscode.Range(
+            new vscode.Position(position.line - 1, 0),
+            positionUtils.lineEnd(document, position)
+        );
+    }),
+    createOperatorMotionExactKeys(['j'], function(vimState, document, position) {
+        if (position.line === document.lineCount - 1) {
+            return new vscode.Range(position, position);
+        }
 
-//             return new vscode.Range(
-//                 new vscode.Position(position.line, 0),
-//                 positionUtils.lineEnd(document, position.with({ line: position.line + 1 }))
-//             );
-//         },
-//     },
-// ];
+        return new vscode.Range(
+            new vscode.Position(position.line, 0),
+            positionUtils.lineEnd(document, position.with({ line: position.line + 1 }))
+        );
+    }),
+];
 
 const actions: Action[] = [
     // Actions
@@ -147,50 +134,13 @@ const actions: Action[] = [
             operators.delete_(vimState, editor, range);
         });
     }),
-    // {
-    //     parseKeys: parseKeysOperator(['d'], operatorMotions),
-    //     exec: function(vimState: VimState, keys: string[], editor: vscode.TextEditor): void {
-    //         const result = parseOperatorAll(vimState, keys, ['d'], operatorMotions);
+    parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
+        ranges.forEach(function(range) {
+            operators.change(vimState, editor, range);
+        });
 
-    //         if (result.kind === 'failure') {
-    //             return;
-    //         }
-
-    //         editor.selections.forEach(function(selection) {
-    //             let range;
-    //             if (vimState.mode === Mode.Normal && result.motion) {
-    //                 range = result.motion.exec(vimState, keys, editor.document, selection.active);
-    //             } else {
-    //                 range = selection;
-    //             }
-
-    //             operators.delete_(vimState, editor, range);
-    //         });
-    //     },
-    // },
-    // {
-    //     parseKeys: parseKeysOperator(['c'], operatorMotions),
-    //     exec: function(vimState: VimState, keys: string[], editor: vscode.TextEditor): void {
-    //         const result = parseOperatorAll(vimState, keys, ['c'], operatorMotions);
-
-    //         if (result.kind === 'failure') {
-    //             return;
-    //         }
-
-    //         editor.selections.forEach(function(selection) {
-    //             let range;
-    //             if (vimState.mode === Mode.Normal && result.motion) {
-    //                 range = result.motion.exec(vimState, keys, editor.document, selection.active);
-    //             } else {
-    //                 range = selection;
-    //             }
-
-    //             operators.change(vimState, editor, range);
-    //         });
-
-    //         enterInsertMode();
-    //     },
-    // },
+        enterInsertMode();
+    }),
 ];
 
 async function typeHandler(e: { text: string }): Promise<void> {
