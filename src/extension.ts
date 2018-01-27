@@ -224,42 +224,6 @@ const actions: (Action & ParseKeys)[] = [
             enterInsertMode();
         },
     },
-
-    // {
-    //     parseKeys: function(vimState: VimState, keys: string[]): ParseKeysResult {
-    //         const result = parseOperator(vimState, keys);
-
-    //         if (result.kind === 'success') {
-    //             return {
-    //                 status: ParseKeysStatus.YES,
-    //                 rest: [],
-    //             };
-    //         } else {
-    //             return {
-    //                 status: result.status,
-    //                 rest: [],
-    //             };
-    //         }
-    //     },
-    //     exec: function(vimState: VimState, keys: string[], editor: vscode.TextEditor): void {
-    //         const result = parseOperator(vimState, keys);
-
-    //         if (result.kind === 'failure') {
-    //             return;
-    //         }
-
-    //         editor.selections.forEach(function(selection) {
-    //             let range;
-    //             if (vimState.mode === Mode.Normal && result.motion) {
-    //                 range = result.motion.exec(vimState, keys, editor.document, selection.active);
-    //             } else {
-    //                 range = selection;
-    //             }
-
-    //             result.operator.exec(vimState, keys, editor, range);
-    //         });
-    //     },
-    // },
 ];
 
 async function typeHandler(e: { text: string }): Promise<void> {
