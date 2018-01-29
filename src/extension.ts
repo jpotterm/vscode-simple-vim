@@ -137,7 +137,6 @@ const actions: Action[] = [
                 });
             });
         } else if (vimState.mode === Mode.Visual) {
-            const finalCursorPositions: vscode.Position[] = [];
             const editPromises: Thenable<boolean>[] = [];
 
             editor.selections.forEach(function(selection, i) {
@@ -146,31 +145,21 @@ const actions: Action[] = [
                 if (!register) return;
 
                 const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
-                const contentsLines = contents.split(/\r?\n/);
-                const contentsLastLine = contentsLines[contentsLines.length - 1];
 
-                const character = (contentsLines.length === 1 ?
-                    selection.start.character + (contents.length - 1) :
-                    contentsLastLine.length - 1
-                );
-
-                finalCursorPositions.push(new vscode.Position(
-                    selection.start.line + (contentsLines.length - 1),
-                    character
-                ));
-
-                editPromises.push(
-                    editor.edit(function(editBuilder) {
-                        editBuilder.replace(selection, contents);
-                    })
-                );
+                editPromises.push(editor.edit(function(editBuilder) {
+                    editBuilder.delete(selection);
+                    editBuilder.insert(selection.start, contents);
+                }));
             });
 
             Promise.all(editPromises).then(function() {
-                editor.selections = editor.selections.map(function(selection, i) {
-                    return new vscode.Selection(finalCursorPositions[i], finalCursorPositions[i]);
+                editor.selections = editor.selections.map(function(selection) {
+                    const newPosition = positionUtils.left(document, selection.active);
+                    return new vscode.Selection(newPosition, newPosition);
                 });
             });
+
+            enterNormalMode();
         } else {
             editor.selections.forEach(function(selection, i) {
                 editor.edit(function(editBuilder) {
@@ -178,32 +167,24 @@ const actions: Action[] = [
                     editBuilder.replace(selection, register.contents);
                 });
             });
-        }
-
-        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
-            // editor.selections = editor.selections.map(function(selection) {
-            //     return new vscode.Selection(selection.active, selection.active);
-            // });
 
             enterNormalMode();
         }
+
+        // if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+        //     // editor.selections = editor.selections.map(function(selection) {
+        //     //     return new vscode.Selection(selection.active, selection.active);
+        //     // });
+
+        //     enterNormalMode();
+        // }
     }),
     // parseKeysExact(['z'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
     //     const document = editor.document;
 
     //     console.log('First line before:', document.lineAt(0));
 
-    //     // const newPosition = new vscode.Position(0, 20);
-    //     // editor.selections[0] = new vscode.Selection(newPosition, newPosition);
-
     //     editor.edit(function(editBuilder) {
-    //         // editBuilder.replace(
-    //         //     new vscode.Range(
-    //         //         new vscode.Position(0, 4),
-    //         //         new vscode.Position(0, 7)
-    //         //     ),
-    //         //     'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    //         // );
     //         editBuilder.delete(
     //             new vscode.Range(
     //                 new vscode.Position(0, 4),
