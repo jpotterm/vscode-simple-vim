@@ -14,30 +14,48 @@ const vimState = new VimState();
 
 const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
-        return new vscode.Range(position, positionUtils.right(document, position));
+        return {
+            range: new vscode.Range(position, positionUtils.right(document, position)),
+            linewise: false,
+        };
     }),
     createOperatorMotionExactKeys(['h'], function(vimState, document, position) {
-        return new vscode.Range(position, positionUtils.left(document, position));
+        return {
+            range: new vscode.Range(position, positionUtils.left(document, position)),
+            linewise: false,
+        };
     }),
     createOperatorMotionExactKeys(['k'], function(vimState, document, position) {
         if (position.line === 0) {
-            return new vscode.Range(position, position);
+            return {
+                range: new vscode.Range(position, position),
+                linewise: true,
+            }
         }
 
-        return new vscode.Range(
-            new vscode.Position(position.line - 1, 0),
-            positionUtils.lineEnd(document, position)
-        );
+        return {
+            range: new vscode.Range(
+                new vscode.Position(position.line - 1, 0),
+                positionUtils.lineEnd(document, position)
+            ),
+            linewise: true,
+        };
     }),
     createOperatorMotionExactKeys(['j'], function(vimState, document, position) {
         if (position.line === document.lineCount - 1) {
-            return new vscode.Range(position, position);
+            return {
+                range: new vscode.Range(position, position),
+                linewise: true,
+            };
         }
 
-        return new vscode.Range(
-            new vscode.Position(position.line, 0),
-            positionUtils.lineEnd(document, position.with({ line: position.line + 1 }))
-        );
+        return {
+            range: new vscode.Range(
+                new vscode.Position(position.line, 0),
+                positionUtils.lineEnd(document, position.with({ line: position.line + 1 }))
+            ),
+            linewise: true,
+        };
     }),
 ];
 
@@ -100,6 +118,113 @@ const actions: Action[] = [
             );
         });
     }),
+    parseKeysExact(['p'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        const document = editor.document;
+
+        if (vimState.mode === Mode.Normal) {
+            editor.selections.forEach(function(selection, i) {
+                editor.edit(function(editBuilder) {
+                    const register = vimState.registers[i + '"'];
+
+                    if (register.linewise) {
+                        editBuilder.insert(
+                            new vscode.Position(selection.active.line + 1, 0),
+                            register.contents + eolString(document.eol)
+                        );
+                    } else {
+                        editBuilder.insert(positionUtils.right(document, selection.active), register.contents);
+                    }
+                });
+            });
+        } else if (vimState.mode === Mode.Visual) {
+            const finalCursorPositions: vscode.Position[] = [];
+            const editPromises: Thenable<boolean>[] = [];
+
+            editor.selections.forEach(function(selection, i) {
+                const register = vimState.registers[i + '"'];
+
+                if (!register) return;
+
+                const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
+                const contentsLines = contents.split(/\r?\n/);
+                const contentsLastLine = contentsLines[contentsLines.length - 1];
+
+                const character = (contentsLines.length === 1 ?
+                    selection.start.character + (contents.length - 1) :
+                    contentsLastLine.length - 1
+                );
+
+                finalCursorPositions.push(new vscode.Position(
+                    selection.start.line + (contentsLines.length - 1),
+                    character
+                ));
+
+                editPromises.push(
+                    editor.edit(function(editBuilder) {
+                        editBuilder.replace(selection, contents);
+                    })
+                );
+            });
+
+            Promise.all(editPromises).then(function() {
+                editor.selections = editor.selections.map(function(selection, i) {
+                    return new vscode.Selection(finalCursorPositions[i], finalCursorPositions[i]);
+                });
+            });
+        } else {
+            editor.selections.forEach(function(selection, i) {
+                editor.edit(function(editBuilder) {
+                    const register = vimState.registers[i + '"'];
+                    editBuilder.replace(selection, register.contents);
+                });
+            });
+        }
+
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+            // editor.selections = editor.selections.map(function(selection) {
+            //     return new vscode.Selection(selection.active, selection.active);
+            // });
+
+            enterNormalMode();
+        }
+    }),
+    // parseKeysExact(['z'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+    //     const document = editor.document;
+
+    //     console.log('First line before:', document.lineAt(0));
+
+    //     // const newPosition = new vscode.Position(0, 20);
+    //     // editor.selections[0] = new vscode.Selection(newPosition, newPosition);
+
+    //     editor.edit(function(editBuilder) {
+    //         // editBuilder.replace(
+    //         //     new vscode.Range(
+    //         //         new vscode.Position(0, 4),
+    //         //         new vscode.Position(0, 7)
+    //         //     ),
+    //         //     'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+    //         // );
+    //         editBuilder.delete(
+    //             new vscode.Range(
+    //                 new vscode.Position(0, 4),
+    //                 new vscode.Position(0, 7)
+    //             )
+    //         );
+    //         editBuilder.insert(
+    //             new vscode.Position(0, 4),
+    //             'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+    //         );
+    //     }).then(function() {
+    //         console.log('First line after:', document.lineAt(0));
+
+    //         editor.selections = editor.selections.map(function(selection) {
+    //             const newPosition = selection.active.with({ character: selection.active.character - 1 });
+    //             return new vscode.Selection(newPosition, newPosition);
+    //         });
+
+    //         enterNormalMode();
+    //     });
+    // }),
 
     // Motions
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
@@ -120,30 +245,47 @@ const actions: Action[] = [
     }),
     parseKeysExact(['w'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
         execMotion(motions.wordForward);
+        vimState.desiredColumns = [];
     }),
     parseKeysExact(['b'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
         execMotion(motions.wordBackward);
+        vimState.desiredColumns = [];
     }),
     parseKeysExact(['e'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
         execMotion(motions.wordEnd);
+        vimState.desiredColumns = [];
     }),
 
     // Operators
     parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        ranges.forEach(function(range) {
-            operators.delete_(vimState, editor, range);
+        ranges.forEach(function(range, i) {
+            operators.delete_(vimState, editor, i + register, count, range);
         });
     }),
     parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        ranges.forEach(function(range) {
-            operators.change(vimState, editor, range);
+        ranges.forEach(function(range, i) {
+            operators.change(vimState, editor, i + register, count, range);
         });
 
         enterInsertMode();
     }),
+    parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
+        ranges.forEach(function(range, i) {
+            operators.yank(vimState, editor, i + register, count, range);
+        });
+
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+            // Move cursor to start of yanked text
+            editor.selections = editor.selections.map(function(selection) {
+                return new vscode.Selection(selection.start, selection.start);
+            });
+
+            enterNormalMode();
+        }
+    }),
 ];
 
-async function typeHandler(e: { text: string }): Promise<void> {
+function typeHandler(e: { text: string }): void {
     const char = e.text;
     const editor = vscode.window.activeTextEditor;
 
@@ -151,20 +293,32 @@ async function typeHandler(e: { text: string }): Promise<void> {
 
     vimState.keysPressed.push(char);
 
-    let could = false;
-    for (let action of actions) {
-        const result = action(vimState, vimState.keysPressed, editor);
+    try {
+        let could = false;
+        for (let action of actions) {
+            const result = action(vimState, vimState.keysPressed, editor);
 
-        if (result === ParseKeysStatus.YES) {
-            vimState.keysPressed = [];
-            break;
-        } else if (result === ParseKeysStatus.MORE_INPUT) {
-            could = true;
+            if (result === ParseKeysStatus.YES) {
+                vimState.keysPressed = [];
+                break;
+            } else if (result === ParseKeysStatus.MORE_INPUT) {
+                could = true;
+            }
         }
-    }
 
-    if (!could) {
-        vimState.keysPressed = [];
+        if (!could) {
+            vimState.keysPressed = [];
+        }
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+function eolString(eol: vscode.EndOfLine) {
+    if (eol === vscode.EndOfLine.CRLF) {
+        return '\r\n';
+    } else {
+        return '\n';
     }
 }
 

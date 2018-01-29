@@ -1,6 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 import { VimState } from './vimState';
+import { VimRange } from './vimRangeTypes';
 
 export enum ParseKeysStatus {
     YES,
@@ -32,7 +33,7 @@ export type ParseOperatorPartSuccess = {
 
 export type ParseOperatorMotionSuccess = {
     kind: 'success';
-    ranges: vscode.Range[];
+    ranges: VimRange[];
 };
 
 export type ParseOperatorSuccess = {

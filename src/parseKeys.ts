@@ -13,6 +13,7 @@ import {
     ParseOperatorMotionSuccess
 } from './parseKeysTypes';
 import { Action } from './actionTypes';
+import { VimRange } from './vimRangeTypes';
 
 
 export function arrayStartsWith<T>(prefix: T[], xs: T[]) {
@@ -157,7 +158,7 @@ function parseOperatorMotionPart(
 export function parseKeysOperator(
     operatorKeys: string[],
     motions: OperatorMotion[],
-    operator: (vimState: VimState, editor: vscode.TextEditor, register: string, count: number, ranges: vscode.Range[]) => void
+    operator: (vimState: VimState, editor: vscode.TextEditor, register: string, count: number, ranges: VimRange[]) => void
 ): Action {
     return function(vimState, keys, editor) {
         const registerResult = parseRegisterPart(keys);
@@ -180,7 +181,7 @@ export function parseKeysOperator(
             return operatorResult.status;
         }
 
-        let ranges;
+        let ranges: VimRange[];
         if (vimState.mode === Mode.Normal) {
             if (operatorResult.rest.length === 0) {
                 return ParseKeysStatus.MORE_INPUT;
@@ -192,8 +193,14 @@ export function parseKeysOperator(
             }
 
             ranges = motionResult.ranges;
+        } else if (vimState.mode === Mode.VisualLine) {
+            ranges = editor.selections.map(function(selection) {
+                return { range: selection, linewise: true };
+            });
         } else {
-            ranges = editor.selections;
+            ranges = editor.selections.map(function(selection) {
+                return { range: selection, linewise: false };
+            });
         }
 
         operator(vimState, editor, registerResult.register, countResult.count, ranges);
@@ -204,7 +211,7 @@ export function parseKeysOperator(
 
 export function createOperatorMotionExactKeys(
     matchKeys: string[],
-    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range
+    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange
 ): OperatorMotion {
     return function(vimState, keys, editor) {
         if (arrayEquals(keys, matchKeys)) {
