@@ -171,14 +171,66 @@ const actions: Action[] = [
             enterNormalMode();
         } else {
             editor.selections.forEach(function(selection, i) {
+                const register = vimState.registers[i + '"'];
+
+                if (!register) return;
+
                 editor.edit(function(editBuilder) {
-                    const register = vimState.registers[i + '"'];
                     editBuilder.replace(selection, register.contents);
+                }).then(function() {
+                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(selection.start, selection.start));
                 });
             });
 
             enterNormalMode();
         }
+    }),
+    parseKeysExact(['P'], [Mode.Normal],  function(vimState, editor) {
+        const document = editor.document;
+
+        editor.selections.forEach(function(selection, i) {
+            const register = vimState.registers[i + '"'];
+
+            if (!register) return;
+
+            if (register.linewise) {
+                const insertPosition = new vscode.Position(selection.active.line, 0);
+
+                editor.edit(function(editBuilder) {
+                    editBuilder.insert(insertPosition, register.contents + '\n');
+                }).then(function() {
+                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(insertPosition, insertPosition));
+                });
+            } else {
+                editor.edit(function(editBuilder) {
+                    editBuilder.insert(editor.selection.active, register.contents);
+                }).then(function() {
+                    // Move cursor back to the left
+                    const newPosition = positionUtils.left(document, editor.selections[i].active);
+                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(newPosition, newPosition));
+                });
+            }
+        });
+    }),
+    parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        vscode.commands.executeCommand('undo');
+    }),
+    parseKeysExact(['d', 'd'], [Mode.Normal],  function(vimState, editor) {
+        const document = editor.document;
+
+        vscode.commands.executeCommand('editor.action.deleteLines').then(function() {
+            editor.selections = editor.selections.map(function(selection) {
+                const character = document.lineAt(selection.active.line).firstNonWhitespaceCharacterIndex;
+                const newPosition = selection.active.with({ character: character });
+                return new vscode.Selection(newPosition, newPosition);
+            });
+        });
+    }),
+    parseKeysExact(['>', '>'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('editor.action.indentLines');
+    }),
+    parseKeysExact(['<', '<'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('editor.action.outdentLines');
     }),
 
     // Motions
@@ -422,6 +474,8 @@ function enterInsertMode(): void {
     editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
     vimState.typeSubscription.dispose();
     vimState.selectionSubscription.dispose();
+
+    setModeContext('extension.simpleVim.insertMode');
 }
 
 function enterNormalMode(): void {
@@ -431,6 +485,8 @@ function enterNormalMode(): void {
 
     vimState.mode = Mode.Normal;
     editor.options.cursorStyle = vscode.TextEditorCursorStyle.Underline;
+
+    setModeContext('extension.simpleVim.normalMode');
 }
 
 function enterVisualMode(): void {
@@ -440,6 +496,8 @@ function enterVisualMode(): void {
 
     vimState.mode = Mode.Visual;
     editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
+
+    setModeContext('extension.simpleVim.visualMode');
 }
 
 function enterVisualLineMode(): void {
@@ -449,6 +507,21 @@ function enterVisualLineMode(): void {
 
     vimState.mode = Mode.VisualLine;
     editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
+
+    setModeContext('extension.simpleVim.visualLineMode');
+}
+
+function setModeContext(key: string) {
+    const modeKeys = [
+        'extension.simpleVim.insertMode',
+        'extension.simpleVim.normalMode',
+        'extension.simpleVim.visualMode',
+        'extension.simpleVim.visualLineMode',
+    ];
+
+    modeKeys.forEach(function(modeKey) {
+        vscode.commands.executeCommand('setContext', modeKey, key === modeKey);
+    });
 }
 
 function addSubscriptions(): void {

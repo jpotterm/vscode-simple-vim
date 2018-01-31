@@ -15,17 +15,16 @@
     ],
     "main": "./out/extension",
     "contributes": {
-        "commands": [
-            {
-                "command": "extension.sayHello",
-                "title": "Hello World"
-            }
-        ],
         "keybindings": [
             {
                 "key": "Escape",
                 "command": "extension.simpleVim.escapeKey",
                 "when": "editorTextFocus"
+            },
+            {
+                "key": "ctrl+r",
+                "command": "redo",
+                "when": "editorTextFocus && !extension.simpleVim.insertMode"
             }
         ]
     },
