@@ -227,10 +227,30 @@ const actions: Action[] = [
         });
     }),
     parseKeysExact(['>', '>'], [Mode.Normal],  function(vimState, editor) {
-        vscode.commands.executeCommand('editor.action.indentLines');
+        const document = editor.document;
+
+        vscode.commands.executeCommand('editor.action.indentLines').then(function() {
+            editor.selections = editor.selections.map(function(selection) {
+                const newPosition = new vscode.Position(
+                    selection.start.line,
+                    document.lineAt(selection.start.line).firstNonWhitespaceCharacterIndex
+                );
+                return new vscode.Selection(newPosition, newPosition);
+            });
+        });
     }),
     parseKeysExact(['<', '<'], [Mode.Normal],  function(vimState, editor) {
-        vscode.commands.executeCommand('editor.action.outdentLines');
+        const document = editor.document;
+
+        vscode.commands.executeCommand('editor.action.outdentLines').then(function() {
+            editor.selections = editor.selections.map(function(selection) {
+                const newPosition = new vscode.Position(
+                    selection.start.line,
+                    document.lineAt(selection.start.line).firstNonWhitespaceCharacterIndex
+                );
+                return new vscode.Selection(newPosition, newPosition);
+            });
+        });
     }),
 
     // Motions
@@ -287,6 +307,48 @@ const actions: Action[] = [
                 return new vscode.Selection(selection.start, selection.start);
             });
 
+            enterNormalMode();
+        }
+    }),
+    parseKeysOperator(['>'], operatorMotions, function(vimState, editor, register, count, ranges) {
+        const document = editor.document;
+
+        editor.selections = editor.selections.map(function(selection, i) {
+            return new vscode.Selection(ranges[i].range.start, ranges[i].range.end);
+        });
+
+        vscode.commands.executeCommand('editor.action.indentLines').then(function() {
+            editor.selections = editor.selections.map(function(selection, i) {
+                const newPosition = new vscode.Position(
+                    ranges[i].range.start.line,
+                    document.lineAt(ranges[i].range.start.line).firstNonWhitespaceCharacterIndex
+                );
+                return new vscode.Selection(newPosition, newPosition);
+            });
+        });
+
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+            enterNormalMode();
+        }
+    }),
+    parseKeysOperator(['<'], operatorMotions, function(vimState, editor, register, count, ranges) {
+        const document = editor.document;
+
+        editor.selections = editor.selections.map(function(selection, i) {
+            return new vscode.Selection(ranges[i].range.start, ranges[i].range.end);
+        });
+
+        vscode.commands.executeCommand('editor.action.outdentLines').then(function() {
+            editor.selections = editor.selections.map(function(selection, i) {
+                const newPosition = new vscode.Position(
+                    ranges[i].range.start.line,
+                    document.lineAt(ranges[i].range.start.line).firstNonWhitespaceCharacterIndex
+                );
+                return new vscode.Selection(newPosition, newPosition);
+            });
+        });
+
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             enterNormalMode();
         }
     }),
