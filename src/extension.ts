@@ -124,6 +124,28 @@ const operatorMotions: OperatorMotion[] = [
             };
         }
     }),
+    createOperatorMotionExactKeys(['g', 'g'], function(vimState, document, position) {
+        const lineLength = document.lineAt(position.line).text.length;
+
+        return {
+            range: new vscode.Range(
+                new vscode.Position(0, 0),
+                position.with({ character: lineLength })
+            ),
+            linewise: true,
+        };
+    }),
+    createOperatorMotionExactKeys(['G'], function(vimState, document, position) {
+        const lineLength = document.lineAt(document.lineCount - 1).text.length;
+
+        return {
+            range: new vscode.Range(
+                position.with({ character: 0 }),
+                new vscode.Position(document.lineCount - 1, lineLength),
+            ),
+            linewise: true,
+        };
+    }),
 ];
 
 const actions: Action[] = [
@@ -292,6 +314,14 @@ const actions: Action[] = [
             });
         });
     }),
+    parseKeysExact(['o'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('editor.action.insertLineAfter');
+        enterInsertMode();
+    }),
+    parseKeysExact(['O'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('editor.action.insertLineBefore');
+        enterInsertMode();
+    }),
 
     // Motions
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
@@ -333,6 +363,12 @@ const actions: Action[] = [
     }),
     parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         execRegexMotion(match, motions.tillBackward);
+    }),
+    parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        execMotion(motions.fileBeginning);
+    }),
+    parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        execMotion(motions.fileEnd);
     }),
 
     // Operators

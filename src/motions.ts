@@ -216,3 +216,11 @@ export function tillBackward({ document, position, match }: RegexMotionArgs): vs
         return position;
     }
 }
+
+export function fileBeginning({ document, position }: MotionArgs): vscode.Position {
+    return new vscode.Position(0, 0);
+}
+
+export function fileEnd({ document, position }: MotionArgs): vscode.Position {
+    return new vscode.Position(document.lineCount - 1, 0);
+}
