@@ -25,6 +25,26 @@
                 "key": "ctrl+r",
                 "command": "redo",
                 "when": "editorTextFocus && !extension.simpleVim.insertMode"
+            },
+            {
+                "key": "ctrl+d",
+                "command": "extension.simpleVim.scrollDownHalfPage",
+                "when": "editorTextFocus && !extension.simpleVim.insertMode"
+            },
+            {
+                "key": "ctrl+u",
+                "command": "extension.simpleVim.scrollUpHalfPage",
+                "when": "editorTextFocus && !extension.simpleVim.insertMode"
+            },
+            {
+                "key": "ctrl+f",
+                "command": "extension.simpleVim.scrollDownPage",
+                "when": "editorTextFocus && !extension.simpleVim.insertMode"
+            },
+            {
+                "key": "ctrl+b",
+                "command": "extension.simpleVim.scrollUpPage",
+                "when": "editorTextFocus && !extension.simpleVim.insertMode"
             }
         ]
     },

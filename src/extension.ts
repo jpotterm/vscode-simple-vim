@@ -9,6 +9,7 @@ import { ParseKeysStatus, OperatorMotion } from './parseKeysTypes';
 import * as motions from './motions';
 import * as operators from './operators';
 import * as positionUtils from './positionUtils';
+import * as scrollCommands from './scrollCommands';
 import { arraySet } from './arrayUtils';
 import { searchForward, searchBackward } from './searchUtils';
 
@@ -322,6 +323,33 @@ const actions: Action[] = [
         vscode.commands.executeCommand('editor.action.insertLineBefore');
         enterInsertMode();
     }),
+    parseKeysExact(['H'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
+    }),
+    parseKeysExact(['M'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('cursorMove', { to: 'viewPortCenter', by: 'line' });
+    }),
+    parseKeysExact(['L'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('cursorMove', { to: 'viewPortBottom', by: 'line' });
+    }),
+    parseKeysExact(['z', 't'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('revealLine', {
+            lineNumber: editor.selection.active.line,
+            at: 'top',
+        });
+    }),
+    parseKeysExact(['z', 'z'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('revealLine', {
+            lineNumber: editor.selection.active.line,
+            at: 'center',
+        });
+    }),
+    parseKeysExact(['z', 'b'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('revealLine', {
+            lineNumber: editor.selection.active.line,
+            at: 'bottom',
+        });
+    }),
 
     // Motions
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
@@ -546,6 +574,8 @@ function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
             return selection;
         }
     });
+
+    editor.revealRange(new vscode.Range(editor.selection.active, editor.selection.active));
 }
 
 function escapeHandler(): void {
@@ -682,7 +712,25 @@ export function activate(context: vscode.ExtensionContext): void {
 
     enterNormalMode();
     addSubscriptions();
+
     context.subscriptions.push(vscode.commands.registerCommand('extension.simpleVim.escapeKey', escapeHandler));
+
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'extension.simpleVim.scrollDownHalfPage',
+        scrollCommands.scrollDownHalfPage
+    ));
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'extension.simpleVim.scrollUpHalfPage',
+        scrollCommands.scrollUpHalfPage
+    ));
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'extension.simpleVim.scrollDownPage',
+        scrollCommands.scrollDownPage
+    ));
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'extension.simpleVim.scrollUpPage',
+        scrollCommands.scrollUpPage
+    ));
 }
 
 export function deactivate(): void {
