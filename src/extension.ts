@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { Mode } from './modes';
 import { VimState } from './vimState';
 import { Action } from './actionTypes';
-import { parseKeysExact, parseKeysOperator, createOperatorMotionExactKeys } from './parseKeys';
+import { parseKeysExact, parseKeysOperator, createOperatorMotionExactKeys, parseKeysRegex, createOperatorMotionRegex } from './parseKeys';
 import { ParseKeysStatus, OperatorMotion } from './parseKeysTypes';
 import * as motions from './motions';
 import * as operators from './operators';
@@ -57,6 +57,72 @@ const operatorMotions: OperatorMotion[] = [
             ),
             linewise: true,
         };
+    }),
+    createOperatorMotionRegex(/^f(.)$/, /^f$/, function(vimState, document, position, match) {
+        const lineText = document.lineAt(position.line).text;
+        const result = lineText.indexOf(match[1], position.character + 1);
+
+        if (result >= 0) {
+            const newPosition = positionUtils.right(document, position.with({ character: result }));
+            return {
+                range: new vscode.Range(position, newPosition),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    }),
+    createOperatorMotionRegex(/^F(.)$/, /^F$/, function(vimState, document, position, match) {
+        const lineText = document.lineAt(position.line).text;
+        const result = lineText.lastIndexOf(match[1], position.character - 1);
+
+        if (result >= 0) {
+            return {
+                range: new vscode.Range(position.with({ character: result }), position),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    }),
+    createOperatorMotionRegex(/^t(.)$/, /^t$/, function(vimState, document, position, match) {
+        const lineText = document.lineAt(position.line).text;
+        const result = lineText.indexOf(match[1], position.character + 1);
+
+        if (result >= 0) {
+            return {
+                range: new vscode.Range(position, position.with({ character: result })),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    }),
+    createOperatorMotionRegex(/^T(.)$/, /^T$/, function(vimState, document, position, match) {
+        const lineText = document.lineAt(position.line).text;
+        const result = lineText.lastIndexOf(match[1], position.character - 1);
+
+        if (result >= 0) {
+            const newPosition = positionUtils.right(document, position.with({ character: result }));
+            return {
+                range: new vscode.Range(newPosition, position),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
     }),
 ];
 
@@ -226,32 +292,6 @@ const actions: Action[] = [
             });
         });
     }),
-    parseKeysExact(['>', '>'], [Mode.Normal],  function(vimState, editor) {
-        const document = editor.document;
-
-        vscode.commands.executeCommand('editor.action.indentLines').then(function() {
-            editor.selections = editor.selections.map(function(selection) {
-                const newPosition = new vscode.Position(
-                    selection.start.line,
-                    document.lineAt(selection.start.line).firstNonWhitespaceCharacterIndex
-                );
-                return new vscode.Selection(newPosition, newPosition);
-            });
-        });
-    }),
-    parseKeysExact(['<', '<'], [Mode.Normal],  function(vimState, editor) {
-        const document = editor.document;
-
-        vscode.commands.executeCommand('editor.action.outdentLines').then(function() {
-            editor.selections = editor.selections.map(function(selection) {
-                const newPosition = new vscode.Position(
-                    selection.start.line,
-                    document.lineAt(selection.start.line).firstNonWhitespaceCharacterIndex
-                );
-                return new vscode.Selection(newPosition, newPosition);
-            });
-        });
-    }),
 
     // Motions
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
@@ -282,6 +322,18 @@ const actions: Action[] = [
         execMotion(motions.wordEnd);
         vimState.desiredColumns = [];
     }),
+    parseKeysRegex(/^f(.)$/, /^f$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        execRegexMotion(match, motions.findForward);
+    }),
+    parseKeysRegex(/^F(.)$/, /^F$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        execRegexMotion(match, motions.findBackward);
+    }),
+    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        execRegexMotion(match, motions.tillForward);
+    }),
+    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        execRegexMotion(match, motions.tillBackward);
+    }),
 
     // Operators
     parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {
@@ -307,48 +359,6 @@ const actions: Action[] = [
                 return new vscode.Selection(selection.start, selection.start);
             });
 
-            enterNormalMode();
-        }
-    }),
-    parseKeysOperator(['>'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        const document = editor.document;
-
-        editor.selections = editor.selections.map(function(selection, i) {
-            return new vscode.Selection(ranges[i].range.start, ranges[i].range.end);
-        });
-
-        vscode.commands.executeCommand('editor.action.indentLines').then(function() {
-            editor.selections = editor.selections.map(function(selection, i) {
-                const newPosition = new vscode.Position(
-                    ranges[i].range.start.line,
-                    document.lineAt(ranges[i].range.start.line).firstNonWhitespaceCharacterIndex
-                );
-                return new vscode.Selection(newPosition, newPosition);
-            });
-        });
-
-        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
-            enterNormalMode();
-        }
-    }),
-    parseKeysOperator(['<'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        const document = editor.document;
-
-        editor.selections = editor.selections.map(function(selection, i) {
-            return new vscode.Selection(ranges[i].range.start, ranges[i].range.end);
-        });
-
-        vscode.commands.executeCommand('editor.action.outdentLines').then(function() {
-            editor.selections = editor.selections.map(function(selection, i) {
-                const newPosition = new vscode.Position(
-                    ranges[i].range.start.line,
-                    document.lineAt(ranges[i].range.start.line).firstNonWhitespaceCharacterIndex
-                );
-                return new vscode.Selection(newPosition, newPosition);
-            });
-        });
-
-        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             enterNormalMode();
         }
     }),
@@ -447,6 +457,15 @@ function vimToVscodeVisualLineSelection(document: vscode.TextDocument, vimSelect
             vimSelection.active.with({ character: activeLineLength })
         );
     }
+}
+
+function execRegexMotion(match: RegExpMatchArray, regexMotion: (args: motions.RegexMotionArgs) => vscode.Position) {
+    return execMotion(function(motionArgs) {
+        return regexMotion({
+            ...motionArgs,
+            match: match,
+        });
+    });
 }
 
 function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
@@ -599,7 +618,7 @@ function removeSubscriptions(): void {
 function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
     if (e.kind === undefined || e.kind === vscode.TextEditorSelectionChangeKind.Command) return;
 
-    console.log('Selection changed');
+    console.log('Selection changed:', e.kind);
 
     const editor = vscode.window.activeTextEditor;
 

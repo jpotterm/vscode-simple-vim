@@ -2,12 +2,21 @@
 import * as vscode from 'vscode';
 
 import { VimState } from './vimState';
+import * as positionUtils from './positionUtils';
 
 export type MotionArgs = {
     document: vscode.TextDocument,
     position: vscode.Position,
     selectionIndex: number,
     vimState: VimState,
+};
+
+export type RegexMotionArgs = {
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    selectionIndex: number,
+    vimState: VimState,
+    match: RegExpMatchArray,
 };
 
 export function left({ document, position }: MotionArgs): vscode.Position {
@@ -157,7 +166,51 @@ export function wordEnd({ document, position }: MotionArgs): vscode.Position {
     const result = ranges.find(x => x.end > position.character);
 
     if (result) {
-        return position.with({ character: result.end })
+        return position.with({ character: result.end });
+    } else {
+        return position;
+    }
+}
+
+export function findForward({ document, position, match }: RegexMotionArgs): vscode.Position {
+    const lineText = document.lineAt(position.line).text;
+    const result = lineText.indexOf(match[1], position.character + 1);
+
+    if (result >= 0) {
+        return position.with({ character: result });
+    } else {
+        return position;
+    }
+}
+
+export function findBackward({ document, position, match }: RegexMotionArgs): vscode.Position {
+    const lineText = document.lineAt(position.line).text;
+    const result = lineText.lastIndexOf(match[1], position.character - 1);
+
+    if (result >= 0) {
+        return position.with({ character: result });
+    } else {
+        return position;
+    }
+}
+
+export function tillForward({ document, position, match }: RegexMotionArgs): vscode.Position {
+    const lineText = document.lineAt(position.line).text;
+    const result = lineText.indexOf(match[1], position.character + 1);
+
+    if (result >= 0) {
+        return positionUtils.left(document, position.with({ character: result }));
+    } else {
+        return position;
+    }
+}
+
+export function tillBackward({ document, position, match }: RegexMotionArgs): vscode.Position {
+    const lineText = document.lineAt(position.line).text;
+    const result = lineText.lastIndexOf(match[1], position.character - 1);
+
+    if (result >= 0) {
+        return positionUtils.rightNormal(document, position.with({ character: result }));
     } else {
         return position;
     }

@@ -65,6 +65,31 @@ export function parseKeysExact(
     };
 }
 
+export function parseKeysRegex(
+    doesPattern: RegExp,
+    couldPattern: RegExp,
+    modes: Mode[],
+    action: (vimState: VimState, editor: vscode.TextEditor, match: RegExpMatchArray) => void,
+): Action {
+    return function(vimState, keys, editor) {
+        if (modes && modes.indexOf(vimState.mode) < 0) {
+            return ParseKeysStatus.NO;
+        }
+
+        const keysStr = keys.join('');
+        const doesMatch = keysStr.match(doesPattern);
+
+        if (doesMatch) {
+            action(vimState, editor, doesMatch);
+            return ParseKeysStatus.YES;
+        } else if (keysStr.match(couldPattern)) {
+            return ParseKeysStatus.MORE_INPUT;
+        } else {
+            return ParseKeysStatus.NO;
+        }
+    };
+}
+
 function parseRegisterPart(keys: string[]): ParseFailure | ParseRegisterPartSuccess {
     if (keys[0] === '"') {
         if (keys.length < 2) {
@@ -223,6 +248,37 @@ export function createOperatorMotionExactKeys(
                 ranges: ranges,
             };
         } else if (arrayStartsWith(keys, matchKeys)) {
+            return {
+                kind: 'failure',
+                status: ParseKeysStatus.MORE_INPUT,
+            };
+        } else {
+            return {
+                kind: 'failure',
+                status: ParseKeysStatus.NO,
+            };
+        }
+    };
+}
+
+export function createOperatorMotionRegex(
+    doesPattern: RegExp,
+    couldPattern: RegExp,
+    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position, match: RegExpMatchArray) => VimRange
+): OperatorMotion {
+    return function(vimState, keys, editor) {
+        const keysStr = keys.join('');
+        const doesMatch = keysStr.match(doesPattern);
+
+        if (doesMatch) {
+            const ranges = editor.selections.map(function(selection) {
+                return f(vimState, editor.document, selection.active, doesMatch);
+            });
+            return {
+                kind: 'success',
+                ranges: ranges,
+            };
+        } else if (keysStr.match(couldPattern)) {
             return {
                 kind: 'failure',
                 status: ParseKeysStatus.MORE_INPUT,
