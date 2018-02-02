@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 import { VimState } from './vimState';
 import * as positionUtils from './positionUtils';
+import { searchForward, searchBackward } from './searchUtils';
 
 export type MotionArgs = {
     document: vscode.TextDocument,
@@ -173,22 +174,22 @@ export function wordEnd({ document, position }: MotionArgs): vscode.Position {
 }
 
 export function findForward({ document, position, match }: RegexMotionArgs): vscode.Position {
-    const lineText = document.lineAt(position.line).text;
-    const result = lineText.indexOf(match[1], position.character + 1);
+    const fromPosition = position.with({ character: position.character + 1 });
+    const result = searchForward(document, match[1], fromPosition);
 
-    if (result >= 0) {
-        return position.with({ character: result });
+    if (result) {
+        return result;
     } else {
         return position;
     }
 }
 
 export function findBackward({ document, position, match }: RegexMotionArgs): vscode.Position {
-    const lineText = document.lineAt(position.line).text;
-    const result = lineText.lastIndexOf(match[1], position.character - 1);
+    const fromPosition = position.with({ character: position.character - 1 });
+    const result = searchBackward(document, match[1], fromPosition);
 
-    if (result >= 0) {
-        return position.with({ character: result });
+    if (result) {
+        return result;
     } else {
         return position;
     }
@@ -199,7 +200,7 @@ export function tillForward({ document, position, match }: RegexMotionArgs): vsc
     const result = lineText.indexOf(match[1], position.character + 1);
 
     if (result >= 0) {
-        return positionUtils.left(document, position.with({ character: result }));
+        return position.with({ character: result });
     } else {
         return position;
     }
@@ -210,7 +211,7 @@ export function tillBackward({ document, position, match }: RegexMotionArgs): vs
     const result = lineText.lastIndexOf(match[1], position.character - 1);
 
     if (result >= 0) {
-        return positionUtils.rightNormal(document, position.with({ character: result }));
+        return position.with({ character: result });
     } else {
         return position;
     }

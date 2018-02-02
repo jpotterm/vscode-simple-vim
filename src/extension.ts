@@ -10,6 +10,7 @@ import * as motions from './motions';
 import * as operators from './operators';
 import * as positionUtils from './positionUtils';
 import { arraySet } from './arrayUtils';
+import { searchForward, searchBackward } from './searchUtils';
 
 const vimState = new VimState();
 
@@ -58,14 +59,13 @@ const operatorMotions: OperatorMotion[] = [
             linewise: true,
         };
     }),
-    createOperatorMotionRegex(/^f(.)$/, /^f$/, function(vimState, document, position, match) {
-        const lineText = document.lineAt(position.line).text;
-        const result = lineText.indexOf(match[1], position.character + 1);
+    createOperatorMotionRegex(/^f(..)$/, /^(f|f.)$/, function(vimState, document, position, match) {
+        const fromPosition = position.with({ character: position.character + 1 });
+        const result = searchForward(document, match[1], fromPosition);
 
-        if (result >= 0) {
-            const newPosition = positionUtils.right(document, position.with({ character: result }));
+        if (result) {
             return {
-                range: new vscode.Range(position, newPosition),
+                range: new vscode.Range(position, result),
                 linewise: false,
             };
         } else {
@@ -75,13 +75,13 @@ const operatorMotions: OperatorMotion[] = [
             };
         }
     }),
-    createOperatorMotionRegex(/^F(.)$/, /^F$/, function(vimState, document, position, match) {
-        const lineText = document.lineAt(position.line).text;
-        const result = lineText.lastIndexOf(match[1], position.character - 1);
+    createOperatorMotionRegex(/^F(..)$/, /^(F|F.)$/, function(vimState, document, position, match) {
+        const fromPosition = position.with({ character: position.character - 1 });
+        const result = searchBackward(document, match[1], fromPosition);
 
-        if (result >= 0) {
+        if (result) {
             return {
-                range: new vscode.Range(position.with({ character: result }), position),
+                range: new vscode.Range(position, result),
                 linewise: false,
             };
         } else {
@@ -322,10 +322,10 @@ const actions: Action[] = [
         execMotion(motions.wordEnd);
         vimState.desiredColumns = [];
     }),
-    parseKeysRegex(/^f(.)$/, /^f$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         execRegexMotion(match, motions.findForward);
     }),
-    parseKeysRegex(/^F(.)$/, /^F$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         execRegexMotion(match, motions.findBackward);
     }),
     parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
