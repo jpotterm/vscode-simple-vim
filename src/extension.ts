@@ -212,62 +212,74 @@ const actions: Action[] = [
         const document = editor.document;
 
         if (vimState.mode === Mode.Normal) {
-            editor.selections.forEach(function(selection, i) {
-                const register = vimState.registers[i + '"'];
+            editor.edit(function(editBuilder) {
+                editor.selections.forEach(function(selection, i) {
+                    const registerArray = vimState.registers['"'];
+                    if (registerArray === undefined || registerArray[i] === undefined) return;
+                    const register = registerArray[i];
 
-                if (!register) return;
-
-                if (register.linewise) {
-                    const insertPosition = new vscode.Position(selection.active.line + 1, 0);
-
-                    editor.edit(function(editBuilder) {
+                    if (register.linewise) {
+                        const insertPosition = new vscode.Position(selection.active.line + 1, 0);
                         editBuilder.insert(insertPosition, register.contents + '\n');
-                    }).then(function() {
-                        editor.selections = arraySet(editor.selections, i, new vscode.Selection(insertPosition, insertPosition));
-                    });
-                } else {
-                    // Move cursor to the right so it will end up at the end of the inserted text
-                    const newPosition = positionUtils.right(document, editor.selection.active);
-                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(newPosition, newPosition));
+                    } else {
+                        const insertPosition = positionUtils.right(document, selection.active);
 
-                    // Insert text
-                    editor.edit(function(editBuilder) {
-                        editBuilder.insert(editor.selection.active, register.contents);
-                    }).then(function() {
-                        // Move cursor back to the left
-                        const newPosition = positionUtils.left(document, editor.selections[i].active);
-                        editor.selections = arraySet(editor.selections, i, new vscode.Selection(newPosition, newPosition));
-                    });
-                }
+                        // Move cursor to the insert position so it will end up at the end of the inserted text
+                        editor.selections = arraySet(editor.selections, i, new vscode.Selection(insertPosition, insertPosition));
+
+                        // Insert text
+                        editBuilder.insert(insertPosition, register.contents);
+                    }
+                });
+            }).then(function() {
+                editor.selections = editor.selections.map(function(selection, i) {
+                    const registerArray = vimState.registers['"'];
+                    if (registerArray === undefined || registerArray[i] === undefined) return selection;
+                    const register = registerArray[i];
+
+                    if (register.linewise) {
+                        const newPosition = new vscode.Position(selection.active.line + 1, 0);
+                        return new vscode.Selection(newPosition, newPosition);
+                    } else {
+                        // Cursor ends up after the insertion so move it one to
+                        // the left so it's under the last inserted character
+                        const newPosition = positionUtils.left(document, selection.active);
+                        return new vscode.Selection(newPosition, newPosition);
+                    }
+                });
             });
         } else if (vimState.mode === Mode.Visual) {
-            editor.selections.forEach(function(selection, i) {
-                const register = vimState.registers[i + '"'];
+            editor.edit(function(editBuilder) {
+                editor.selections.forEach(function(selection, i) {
+                    const registerArray = vimState.registers['"'];
+                    if (registerArray === undefined || registerArray[i] === undefined) return;
+                    const register = registerArray[i];
 
-                if (!register) return;
+                    const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
 
-                const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
-
-                editor.edit(function(editBuilder) {
                     editBuilder.delete(selection);
                     editBuilder.insert(selection.start, contents);
-                }).then(function() {
-                    const newPosition = positionUtils.left(document, editor.selections[i].active);
-                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(newPosition, newPosition));
+                });
+            }).then(function() {
+                editor.selections = editor.selections.map(function(selection) {
+                    const newPosition = positionUtils.left(document, selection.active);
+                    return new vscode.Selection(newPosition, newPosition);
                 });
             });
 
             enterNormalMode();
         } else {
-            editor.selections.forEach(function(selection, i) {
-                const register = vimState.registers[i + '"'];
+            editor.edit(function(editBuilder) {
+                editor.selections.forEach(function(selection, i) {
+                    const registerArray = vimState.registers['"'];
+                    if (registerArray === undefined || registerArray[i] === undefined) return;
+                    const register = registerArray[i];
 
-                if (!register) return;
-
-                editor.edit(function(editBuilder) {
                     editBuilder.replace(selection, register.contents);
-                }).then(function() {
-                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(selection.start, selection.start));
+                });
+            }).then(function() {
+                editor.selections = editor.selections.map(function(selection) {
+                    return new vscode.Selection(selection.start, selection.start);
                 });
             });
 
@@ -277,28 +289,35 @@ const actions: Action[] = [
     parseKeysExact(['P'], [Mode.Normal],  function(vimState, editor) {
         const document = editor.document;
 
-        editor.selections.forEach(function(selection, i) {
-            const register = vimState.registers[i + '"'];
+        editor.edit(function(editBuilder) {
+            editor.selections.forEach(function(selection, i) {
+                const registerArray = vimState.registers['"'];
+                if (registerArray === undefined || registerArray[i] === undefined) return;
+                const register = registerArray[i];
 
-            if (!register) return;
-
-            if (register.linewise) {
-                const insertPosition = new vscode.Position(selection.active.line, 0);
-
-                editor.edit(function(editBuilder) {
+                if (register.linewise) {
+                    const insertPosition = new vscode.Position(selection.active.line, 0);
                     editBuilder.insert(insertPosition, register.contents + '\n');
-                }).then(function() {
-                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(insertPosition, insertPosition));
-                });
-            } else {
-                editor.edit(function(editBuilder) {
-                    editBuilder.insert(editor.selection.active, register.contents);
-                }).then(function() {
-                    // Move cursor back to the left
-                    const newPosition = positionUtils.left(document, editor.selections[i].active);
-                    editor.selections = arraySet(editor.selections, i, new vscode.Selection(newPosition, newPosition));
-                });
-            }
+                } else {
+                    editBuilder.insert(selection.active, register.contents);
+                }
+            });
+        }).then(function() {
+            editor.selections = editor.selections.map(function(selection, i) {
+                const registerArray = vimState.registers['"'];
+                if (registerArray === undefined || registerArray[i] === undefined) return selection;
+                const register = registerArray[i];
+
+                if (register.linewise) {
+                    const newPosition = new vscode.Position(selection.active.line, 0);
+                    return new vscode.Selection(newPosition, newPosition);
+                } else {
+                    // Cursor ends up after the insertion so move it one to
+                    // the left so it's under the last inserted character
+                    const newPosition = positionUtils.left(document, selection.active);
+                    return new vscode.Selection(newPosition, newPosition);
+                }
+            });
         });
     }),
     parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
@@ -413,8 +432,11 @@ const actions: Action[] = [
         enterInsertMode();
     }),
     parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        ranges.forEach(function(range, i) {
-            operators.yank(vimState, editor, i + register, count, range);
+        vimState.registers[register] = ranges.map(function(range) {
+            return {
+                contents: editor.document.getText(range.range),
+                linewise: range.linewise,
+            };
         });
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {

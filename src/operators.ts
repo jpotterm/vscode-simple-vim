@@ -25,10 +25,3 @@ export function change(vimState: VimState, editor: vscode.TextEditor, register: 
         editBuilder.delete(range.range);
     });
 }
-
-export function yank(vimState: VimState, editor: vscode.TextEditor, register: string, count: number, range: VimRange) {
-    vimState.registers[register] = {
-        contents: editor.document.getText(range.range),
-        linewise: range.linewise,
-    };
-}

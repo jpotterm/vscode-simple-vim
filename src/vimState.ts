@@ -14,5 +14,5 @@ export class VimState {
     mode: Mode;
     desiredColumns: number[] = [];
     keysPressed: string[] = [];
-    registers: { [index: string]: Regsiter } = {};
+    registers: { [index: string]: Regsiter[] } = {};
 }
