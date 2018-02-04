@@ -153,7 +153,7 @@ const actions: Action[] = [
     // Actions
     parseKeysExact(['i'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         enterInsertMode();
-        removeSubscriptions();
+        removeTypeSubscription();
     }),
     parseKeysExact(['I'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
@@ -162,7 +162,7 @@ const actions: Action[] = [
         });
 
         enterInsertMode();
-        removeSubscriptions();
+        removeTypeSubscription();
     }),
     parseKeysExact(['a'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
@@ -171,7 +171,7 @@ const actions: Action[] = [
         });
 
         enterInsertMode();
-        removeSubscriptions();
+        removeTypeSubscription();
     }),
     parseKeysExact(['A'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
@@ -181,7 +181,7 @@ const actions: Action[] = [
         });
 
         enterInsertMode();
-        removeSubscriptions();
+        removeTypeSubscription();
     }),
     parseKeysExact(['v'], [Mode.Normal, Mode.VisualLine],  function(vimState, editor) {
         enterVisualMode();
@@ -337,10 +337,12 @@ const actions: Action[] = [
     parseKeysExact(['o'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('editor.action.insertLineAfter');
         enterInsertMode();
+        removeTypeSubscription();
     }),
     parseKeysExact(['O'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('editor.action.insertLineBefore');
         enterInsertMode();
+        removeTypeSubscription();
     }),
     parseKeysExact(['H'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
@@ -430,6 +432,7 @@ const actions: Action[] = [
         });
 
         enterInsertMode();
+        removeTypeSubscription();
     }),
     parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
         vimState.registers[register] = ranges.map(function(range) {
@@ -614,7 +617,7 @@ function escapeHandler(): void {
         });
 
         enterNormalMode();
-        addSubscriptions();
+        addTypeSubscription();
     } else if (vimState.mode === Mode.Visual) {
         editor.selections = editor.selections.map(function(selection) {
             const newPosition = new vscode.Position(selection.active.line, Math.max(selection.active.character - 1, 0));
@@ -641,8 +644,6 @@ function enterInsertMode(): void {
 
     vimState.mode = Mode.Insert;
     editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
-    vimState.typeSubscription.dispose();
-    vimState.selectionSubscription.dispose();
 
     setModeContext('extension.simpleVim.insertMode');
 }
@@ -693,18 +694,21 @@ function setModeContext(key: string) {
     });
 }
 
-function addSubscriptions(): void {
+function addTypeSubscription(): void {
     vimState.typeSubscription = vscode.commands.registerCommand('type', typeHandler);
-    vimState.selectionSubscription = vscode.window.onDidChangeTextEditorSelection(onSelectionChange);
 }
 
-function removeSubscriptions(): void {
+function removeTypeSubscription(): void {
     vimState.typeSubscription.dispose();
-    vimState.selectionSubscription.dispose();
 }
 
 function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
-    if (e.kind === undefined || e.kind === vscode.TextEditorSelectionChangeKind.Command) return;
+    if (e.kind === undefined ||
+        e.kind === vscode.TextEditorSelectionChangeKind.Command ||
+        vimState.mode === Mode.Insert
+    ) {
+        return;
+    }
 
     console.log('Selection changed:', e.kind);
 
@@ -729,32 +733,54 @@ function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
     });
 }
 
+function onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined) {
+    if (!editor) return;
+
+    if (vimState.mode === Mode.Insert) {
+        enterNormalMode();
+        addTypeSubscription();
+    } else {
+        if (editor.selections.every(selection => selection.isEmpty)) {
+            enterNormalMode();
+        } else {
+            enterVisualMode();
+        }
+    }
+
+    vimState.desiredColumns = [];
+    vimState.keysPressed = [];
+}
+
 export function activate(context: vscode.ExtensionContext): void {
     console.log('Simple Vim is active!');
 
-    enterNormalMode();
-    addSubscriptions();
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(onDidChangeActiveTextEditor),
+        vscode.window.onDidChangeTextEditorSelection(onSelectionChange),
+        vscode.commands.registerCommand('extension.simpleVim.escapeKey', escapeHandler),
+        vscode.commands.registerCommand(
+            'extension.simpleVim.scrollDownHalfPage',
+            scrollCommands.scrollDownHalfPage
+        ),
+        vscode.commands.registerCommand(
+            'extension.simpleVim.scrollUpHalfPage',
+            scrollCommands.scrollUpHalfPage
+        ),
+        vscode.commands.registerCommand(
+            'extension.simpleVim.scrollDownPage',
+            scrollCommands.scrollDownPage
+        ),
+        vscode.commands.registerCommand(
+            'extension.simpleVim.scrollUpPage',
+            scrollCommands.scrollUpPage
+        )
+    );
 
-    context.subscriptions.push(vscode.commands.registerCommand('extension.simpleVim.escapeKey', escapeHandler));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'extension.simpleVim.scrollDownHalfPage',
-        scrollCommands.scrollDownHalfPage
-    ));
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'extension.simpleVim.scrollUpHalfPage',
-        scrollCommands.scrollUpHalfPage
-    ));
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'extension.simpleVim.scrollDownPage',
-        scrollCommands.scrollDownPage
-    ));
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'extension.simpleVim.scrollUpPage',
-        scrollCommands.scrollUpPage
-    ));
+    if (vscode.window.activeTextEditor) {
+        onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
+    }
 }
 
 export function deactivate(): void {
-    removeSubscriptions();
+    removeTypeSubscription();
 }

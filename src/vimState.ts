@@ -10,8 +10,7 @@ type Regsiter = {
 
 export class VimState {
     typeSubscription: vscode.Disposable;
-    selectionSubscription: vscode.Disposable;
-    mode: Mode;
+    mode: Mode = Mode.Insert;
     desiredColumns: number[] = [];
     keysPressed: string[] = [];
     registers: { [index: string]: Regsiter[] } = {};
