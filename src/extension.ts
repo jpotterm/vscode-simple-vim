@@ -618,6 +618,11 @@ function escapeHandler(): void {
 
         enterNormalMode();
         addTypeSubscription();
+    } else if (vimState.mode === Mode.Normal) {
+        // Clear multiple cursors
+        if (editor.selections.length > 1) {
+            editor.selections = [editor.selections[0]];
+        }
     } else if (vimState.mode === Mode.Visual) {
         editor.selections = editor.selections.map(function(selection) {
             const newPosition = new vscode.Position(selection.active.line, Math.max(selection.active.character - 1, 0));
@@ -703,10 +708,7 @@ function removeTypeSubscription(): void {
 }
 
 function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
-    if (e.kind === undefined ||
-        e.kind === vscode.TextEditorSelectionChangeKind.Command ||
-        vimState.mode === Mode.Insert
-    ) {
+    if (e.kind === vscode.TextEditorSelectionChangeKind.Command || vimState.mode === Mode.Insert) {
         return;
     }
 
@@ -718,19 +720,24 @@ function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
 
     vimState.desiredColumns = [];
 
-    editor.selections = editor.selections.map(function(selection, i) {
-        const lineLength = editor.document.lineAt(selection.active.line).text.length;
+    if (editor.selections.some(selection => !selection.isEmpty)) {
+        enterVisualMode();
+    } else {
+        // Prevent cursor from landing on the last character of the line
+        editor.selections = editor.selections.map(function(selection, i) {
+            const lineLength = editor.document.lineAt(selection.active.line).text.length;
 
-        if (lineLength > 0 && selection.active.character === lineLength) {
-            const newPosition = new vscode.Position(
-                selection.active.line,
-                lineLength - 1,
-            );
-            return new vscode.Selection(newPosition, newPosition);
-        } else {
-            return selection;
-        }
-    });
+            if (lineLength > 0 && selection.active.character === lineLength) {
+                const newPosition = new vscode.Position(
+                    selection.active.line,
+                    lineLength - 1,
+                );
+                return new vscode.Selection(newPosition, newPosition);
+            } else {
+                return selection;
+            }
+        });
+    }
 }
 
 function onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined) {
@@ -739,12 +746,9 @@ function onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined) {
     if (vimState.mode === Mode.Insert) {
         enterNormalMode();
         addTypeSubscription();
-    } else {
-        if (editor.selections.every(selection => selection.isEmpty)) {
-            enterNormalMode();
-        } else {
-            enterVisualMode();
-        }
+    } else if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+        // If there's a non-empty selection we'll go back to visual mode in onSelectionChange
+        enterNormalMode();
     }
 
     vimState.desiredColumns = [];
