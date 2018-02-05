@@ -20,7 +20,10 @@ export function vscodeToVimVisualSelection(
     }
 }
 
-export function vimToVscodeVisualSelection(document: vscode.TextDocument, vimSelection: vscode.Selection): vscode.Selection {
+export function vimToVscodeVisualSelection(
+    document: vscode.TextDocument,
+    vimSelection: vscode.Selection,
+): vscode.Selection {
     if (vimSelection.active.isBefore(vimSelection.anchor)) {
         return new vscode.Selection(
             positionUtils.right(document, vimSelection.anchor),

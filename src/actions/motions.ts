@@ -11,60 +11,67 @@ import {
     createOperatorMotionRegex,
 } from '../parseKeys';
 import { enterInsertMode, enterVisualMode, enterVisualLineMode, enterNormalMode } from '../modes';
-import { vscodeToVimVisualSelection } from '../selectionUtils';
+import {
+    vscodeToVimVisualSelection,
+    vimToVscodeVisualLineSelection,
+    vimToVscodeVisualSelection,
+    vscodeToVimVisualLineSelection,
+} from '../selectionUtils';
 import * as positionUtils from '../positionUtils';
-import * as motions from './motions';
+import * as motionsTop from '../motionsTop';
+import { VimState } from '../vimStateTypes';
+import { vimState } from '../vimState';
 
 export const motions: Action[] = [
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motions.right);
+        execMotion(motionsTop.right);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motions.left);
+        execMotion(motionsTop.left);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         setDesiredColumns(editor, vimState);
-        execMotion(motions.up);
+        execMotion(motionsTop.up);
     }),
     parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         setDesiredColumns(editor, vimState);
-        execMotion(motions.down);
+        execMotion(motionsTop.down);
     }),
     parseKeysExact(['w'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motions.wordForward);
+        execMotion(motionsTop.wordForward);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['b'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motions.wordBackward);
+        execMotion(motionsTop.wordBackward);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['e'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motions.wordEnd);
+        execMotion(motionsTop.wordEnd);
         vimState.desiredColumns = [];
     }),
     parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motions.findForward);
+        execRegexMotion(match, motionsTop.findForward);
     }),
     parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motions.findBackward);
+        execRegexMotion(match, motionsTop.findBackward);
     }),
     parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motions.tillForward);
+        execRegexMotion(match, motionsTop.tillForward);
     }),
     parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motions.tillBackward);
+        execRegexMotion(match, motionsTop.tillBackward);
     }),
     parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(motions.fileBeginning);
+        execMotion(motionsTop.fileBeginning);
     }),
     parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(motions.fileEnd);
+        execMotion(motionsTop.fileEnd);
     }),
 ];
 
-function execRegexMotion(match: RegExpMatchArray, regexMotion: (args: motions.RegexMotionArgs) => vscode.Position) {
+function execRegexMotion(match: RegExpMatchArray, regexMotion: (args: motionsTop.RegexMotionArgs) => vscode.Position) {
     return execMotion(function(motionArgs) {
         return regexMotion({
             ...motionArgs,
@@ -73,7 +80,7 @@ function execRegexMotion(match: RegExpMatchArray, regexMotion: (args: motions.Re
     });
 }
 
-function execMotion(motion: (args: motions.MotionArgs) => vscode.Position) {
+function execMotion(motion: (args: motionsTop.MotionArgs) => vscode.Position) {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;
