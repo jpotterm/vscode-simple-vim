@@ -240,4 +240,26 @@ export const actions: Action[] = [
             at: 'bottom',
         });
     }),
+    parseKeysExact(['y', 'y'], [Mode.Normal],  function(vimState, editor) {
+        const document = editor.document;
+        const register = '"';
+
+        vimState.registers[register] = editor.selections.map(function(selection) {
+            return {
+                contents: document.lineAt(selection.active).text,
+                linewise: true,
+            };
+        });
+    }),
+    parseKeysExact(['Y'], [Mode.Normal],  function(vimState, editor) {
+        const document = editor.document;
+        const register = '"';
+
+        vimState.registers[register] = editor.selections.map(function(selection) {
+            return {
+                contents: document.lineAt(selection.active).text.substring(selection.active.character),
+                linewise: false,
+            };
+        });
+    }),
 ];
