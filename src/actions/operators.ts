@@ -21,8 +21,8 @@ export const operators: Action[] = [
             change(vimState, editor, i + register, count, range);
         });
 
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
         vimState.registers[register] = ranges.map(function(range) {
@@ -38,7 +38,7 @@ export const operators: Action[] = [
                 return new vscode.Selection(selection.start, selection.start);
             });
 
-            enterNormalMode();
+            enterNormalMode(vimState);
         }
     }),
 ];

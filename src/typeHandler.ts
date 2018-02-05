@@ -2,11 +2,10 @@
 import * as vscode from 'vscode';
 
 import { ParseKeysStatus } from './parseKeysTypes';
-import { vimState } from './vimState';
 import { actions } from './actions';
+import { VimState } from './vimStateTypes';
 
-export function typeHandler(e: { text: string }): void {
-    const char = e.text;
+export function typeHandler(vimState: VimState, char: string): void {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;

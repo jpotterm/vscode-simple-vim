@@ -2,9 +2,9 @@
 import * as vscode from 'vscode';
 
 import { Mode } from './modesTypes';
-import { vimState } from './vimState';
+import { VimState } from './vimStateTypes';
 
-export function enterInsertMode(): void {
+export function enterInsertMode(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;
@@ -15,7 +15,7 @@ export function enterInsertMode(): void {
     setModeContext('extension.simpleVim.insertMode');
 }
 
-export function enterNormalMode(): void {
+export function enterNormalMode(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;
@@ -26,7 +26,7 @@ export function enterNormalMode(): void {
     setModeContext('extension.simpleVim.normalMode');
 }
 
-export function enterVisualMode(): void {
+export function enterVisualMode(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;
@@ -37,7 +37,7 @@ export function enterVisualMode(): void {
     setModeContext('extension.simpleVim.visualMode');
 }
 
-export function enterVisualLineMode(): void {
+export function enterVisualLineMode(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;

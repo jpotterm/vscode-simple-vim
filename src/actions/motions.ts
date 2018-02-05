@@ -20,59 +20,62 @@ import {
 import * as positionUtils from '../positionUtils';
 import * as motionsTop from '../motionsTop';
 import { VimState } from '../vimStateTypes';
-import { vimState } from '../vimState';
 
 export const motions: Action[] = [
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motionsTop.right);
+        execMotion(vimState, motionsTop.right);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motionsTop.left);
+        execMotion(vimState, motionsTop.left);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         setDesiredColumns(editor, vimState);
-        execMotion(motionsTop.up);
+        execMotion(vimState, motionsTop.up);
     }),
     parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         setDesiredColumns(editor, vimState);
-        execMotion(motionsTop.down);
+        execMotion(vimState, motionsTop.down);
     }),
     parseKeysExact(['w'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motionsTop.wordForward);
+        execMotion(vimState, motionsTop.wordForward);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['b'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motionsTop.wordBackward);
+        execMotion(vimState, motionsTop.wordBackward);
         vimState.desiredColumns = [];
     }),
     parseKeysExact(['e'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(motionsTop.wordEnd);
+        execMotion(vimState, motionsTop.wordEnd);
         vimState.desiredColumns = [];
     }),
     parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motionsTop.findForward);
+        execRegexMotion(vimState, match, motionsTop.findForward);
     }),
     parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motionsTop.findBackward);
+        execRegexMotion(vimState, match, motionsTop.findBackward);
     }),
     parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motionsTop.tillForward);
+        execRegexMotion(vimState, match, motionsTop.tillForward);
     }),
     parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(match, motionsTop.tillBackward);
+        execRegexMotion(vimState, match, motionsTop.tillBackward);
     }),
     parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(motionsTop.fileBeginning);
+        execMotion(vimState, motionsTop.fileBeginning);
     }),
     parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(motionsTop.fileEnd);
+        execMotion(vimState, motionsTop.fileEnd);
     }),
 ];
 
-function execRegexMotion(match: RegExpMatchArray, regexMotion: (args: motionsTop.RegexMotionArgs) => vscode.Position) {
-    return execMotion(function(motionArgs) {
+function execRegexMotion(
+    vimState: VimState,
+    match: RegExpMatchArray,
+    regexMotion: (args: motionsTop.RegexMotionArgs) => vscode.Position,
+) {
+    return execMotion(vimState, function(motionArgs) {
         return regexMotion({
             ...motionArgs,
             match: match,
@@ -80,7 +83,7 @@ function execRegexMotion(match: RegExpMatchArray, regexMotion: (args: motionsTop
     });
 }
 
-function execMotion(motion: (args: motionsTop.MotionArgs) => vscode.Position) {
+function execMotion(vimState: VimState, motion: (args: motionsTop.MotionArgs) => vscode.Position) {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;

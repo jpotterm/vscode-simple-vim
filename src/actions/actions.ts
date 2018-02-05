@@ -17,8 +17,8 @@ import { arraySet } from '../arrayUtils';
 
 export const actions: Action[] = [
     parseKeysExact(['i'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysExact(['I'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
@@ -26,8 +26,8 @@ export const actions: Action[] = [
             return new vscode.Selection(newPosition, newPosition);
         });
 
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysExact(['a'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
@@ -35,8 +35,8 @@ export const actions: Action[] = [
             return new vscode.Selection(newPosition, newPosition);
         });
 
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysExact(['A'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
@@ -45,11 +45,11 @@ export const actions: Action[] = [
             return new vscode.Selection(newPosition, newPosition);
         });
 
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysExact(['v'], [Mode.Normal, Mode.VisualLine],  function(vimState, editor) {
-        enterVisualMode();
+        enterVisualMode(vimState);
 
         editor.selections = editor.selections.map(function(selection) {
             const lineLength = editor.document.lineAt(selection.active.line).text.length;
@@ -60,7 +60,7 @@ export const actions: Action[] = [
         });
     }),
     parseKeysExact(['V'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        enterVisualLineMode();
+        enterVisualLineMode(vimState);
 
         editor.selections = editor.selections.map(function(selection) {
             const lineLength = editor.document.lineAt(selection.active.line).text.length;
@@ -136,7 +136,7 @@ export const actions: Action[] = [
                 });
             });
 
-            enterNormalMode();
+            enterNormalMode(vimState);
         } else {
             editor.edit(function(editBuilder) {
                 editor.selections.forEach(function(selection, i) {
@@ -152,7 +152,7 @@ export const actions: Action[] = [
                 });
             });
 
-            enterNormalMode();
+            enterNormalMode(vimState);
         }
     }),
     parseKeysExact(['P'], [Mode.Normal],  function(vimState, editor) {
@@ -205,13 +205,13 @@ export const actions: Action[] = [
     }),
     parseKeysExact(['o'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('editor.action.insertLineAfter');
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysExact(['O'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('editor.action.insertLineBefore');
-        enterInsertMode();
-        removeTypeSubscription();
+        enterInsertMode(vimState);
+        removeTypeSubscription(vimState);
     }),
     parseKeysExact(['H'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });

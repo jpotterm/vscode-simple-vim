@@ -4,12 +4,20 @@ import * as vscode from 'vscode';
 import { Mode } from './modesTypes';
 import * as positionUtils from './positionUtils';
 import * as scrollCommands from './scrollCommands';
-import { vimState } from './vimState';
 import { enterNormalMode, enterVisualMode } from './modes';
 import { typeHandler } from './typeHandler';
 import { addTypeSubscription, removeTypeSubscription } from './typeSubscription';
+import { VimState } from './vimStateTypes';
 
-function escapeHandler(): void {
+const globalVimState: VimState = {
+    typeSubscription: undefined,
+    mode: Mode.Insert,
+    desiredColumns: [],
+    keysPressed: [],
+    registers: {},
+};
+
+function escapeHandler(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor) return;
@@ -22,8 +30,8 @@ function escapeHandler(): void {
             return new vscode.Selection(newPosition, newPosition);
         });
 
-        enterNormalMode();
-        addTypeSubscription(typeHandler);
+        enterNormalMode(vimState);
+        addTypeSubscription(vimState, typeHandler);
     } else if (vimState.mode === Mode.Normal) {
         // Clear multiple cursors
         if (editor.selections.length > 1) {
@@ -35,7 +43,7 @@ function escapeHandler(): void {
             return new vscode.Selection(newPosition, newPosition);
         });
 
-        enterNormalMode();
+        enterNormalMode(vimState);
     }  else if (vimState.mode === Mode.VisualLine) {
         editor.selections = editor.selections.map(function(selection) {
             const newPosition = selection.active.with({
@@ -44,11 +52,11 @@ function escapeHandler(): void {
             return new vscode.Selection(newPosition, newPosition);
         });
 
-        enterNormalMode();
+        enterNormalMode(vimState);
     }
 }
 
-function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
+function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChangeEvent): void {
     if (e.kind === vscode.TextEditorSelectionChangeKind.Command || vimState.mode === Mode.Insert) {
         return;
     }
@@ -62,7 +70,7 @@ function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
     vimState.desiredColumns = [];
 
     if (editor.selections.some(selection => !selection.isEmpty)) {
-        enterVisualMode();
+        enterVisualMode(vimState);
     } else {
         // Prevent cursor from landing on the last character of the line
         editor.selections = editor.selections.map(function(selection, i) {
@@ -81,15 +89,15 @@ function onSelectionChange(e: vscode.TextEditorSelectionChangeEvent): void {
     }
 }
 
-function onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined) {
+function onDidChangeActiveTextEditor(vimState: VimState, editor: vscode.TextEditor | undefined) {
     if (!editor) return;
 
     if (vimState.mode === Mode.Insert) {
-        enterNormalMode();
-        addTypeSubscription(typeHandler);
+        enterNormalMode(vimState);
+        addTypeSubscription(vimState, typeHandler);
     } else if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
         // If there's a non-empty selection we'll go back to visual mode in onSelectionChange
-        enterNormalMode();
+        enterNormalMode(vimState);
     }
 
     vimState.desiredColumns = [];
@@ -100,9 +108,12 @@ export function activate(context: vscode.ExtensionContext): void {
     console.log('Simple Vim is active!');
 
     context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(onDidChangeActiveTextEditor),
-        vscode.window.onDidChangeTextEditorSelection(onSelectionChange),
-        vscode.commands.registerCommand('extension.simpleVim.escapeKey', escapeHandler),
+        vscode.window.onDidChangeActiveTextEditor((editor) => onDidChangeActiveTextEditor(globalVimState, editor)),
+        vscode.window.onDidChangeTextEditorSelection((e) => onSelectionChange(globalVimState, e)),
+        vscode.commands.registerCommand(
+            'extension.simpleVim.escapeKey',
+            () => escapeHandler(globalVimState),
+        ),
         vscode.commands.registerCommand(
             'extension.simpleVim.scrollDownHalfPage',
             scrollCommands.scrollDownHalfPage,
@@ -122,10 +133,10 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     if (vscode.window.activeTextEditor) {
-        onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
+        onDidChangeActiveTextEditor(globalVimState, vscode.window.activeTextEditor);
     }
 }
 
 export function deactivate(): void {
-    removeTypeSubscription();
+    removeTypeSubscription(globalVimState);
 }
