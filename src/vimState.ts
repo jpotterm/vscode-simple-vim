@@ -1,17 +1,11 @@
 'use strict';
-import * as vscode from 'vscode';
+import { VimState } from './vimStateTypes';
+import { Mode } from './modesTypes';
 
-import { Mode } from './modes';
-
-type Regsiter = {
-    contents: string;
-    linewise: boolean;
+export const vimState: VimState = {
+    typeSubscription: undefined,
+    mode: Mode.Insert,
+    desiredColumns: [],
+    keysPressed: [],
+    registers: {},
 };
-
-export class VimState {
-    typeSubscription: vscode.Disposable;
-    mode: Mode = Mode.Insert;
-    desiredColumns: number[] = [];
-    keysPressed: string[] = [];
-    registers: { [index: string]: Regsiter[] } = {};
-}

@@ -1,7 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { VimState } from './vimState';
+import { VimState } from './vimStateTypes';
 import * as positionUtils from './positionUtils';
 import { searchForward, searchBackward } from './searchUtils';
 
@@ -141,7 +141,7 @@ export function wordForward({ document, position }: MotionArgs): vscode.Position
     const result = ranges.find(x => x.start > position.character);
 
     if (result) {
-        return position.with({ character: result.start })
+        return position.with({ character: result.start });
     } else {
         return position;
     }
@@ -154,7 +154,7 @@ export function wordBackward({ document, position }: MotionArgs): vscode.Positio
     const result = ranges.reverse().find(x => x.start < position.character);
 
     if (result) {
-        return position.with({ character: result.start })
+        return position.with({ character: result.start });
     } else {
         return position;
     }

@@ -14,7 +14,11 @@ export function right(document: vscode.TextDocument, position: vscode.Position, 
     });
 }
 
-export function rightNormal(document: vscode.TextDocument, position: vscode.Position, count: number = 1): vscode.Position {
+export function rightNormal(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    count: number = 1,
+): vscode.Position {
     const lineLength = document.lineAt(position.line).text.length;
     return position.with({
         character: Math.min(position.character + count, lineLength - 1),

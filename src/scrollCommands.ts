@@ -7,23 +7,23 @@ function editorScroll(to: string, by: string) {
     if (!editor) return;
 
     vscode.commands.executeCommand('editorScroll', {
-        'to': to,
-        'by': by,
+        to: to,
+        by: by,
     });
 }
 
 export function scrollDownHalfPage(): void {
-    editorScroll('down','halfPage');
+    editorScroll('down', 'halfPage');
 }
 
 export function scrollUpHalfPage(): void {
-    editorScroll('up','halfPage');
+    editorScroll('up', 'halfPage');
 }
 
 export function scrollDownPage(): void {
-    editorScroll('down','page');
+    editorScroll('down', 'page');
 }
 
 export function scrollUpPage(): void {
-    editorScroll('up','page');
+    editorScroll('up', 'page');
 }

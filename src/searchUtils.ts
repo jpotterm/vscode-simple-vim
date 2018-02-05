@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 export function searchForward(
     document: vscode.TextDocument,
     needle: string,
-    fromPosition: vscode.Position
+    fromPosition: vscode.Position,
 ): vscode.Position | undefined {
     for (let i = fromPosition.line; i < document.lineCount; ++i) {
         const lineText = document.lineAt(i).text;
@@ -22,7 +22,7 @@ export function searchForward(
 export function searchBackward(
     document: vscode.TextDocument,
     needle: string,
-    fromPosition: vscode.Position
+    fromPosition: vscode.Position,
 ): vscode.Position | undefined {
     for (let i = fromPosition.line; i >= 0; --i) {
         const lineText = document.lineAt(i).text;

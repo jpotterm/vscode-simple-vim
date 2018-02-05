@@ -1,8 +1,8 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { VimState } from './vimState';
-import { Mode } from './modes';
+import { VimState } from './vimStateTypes';
+import { Mode } from './modesTypes';
 import {
     ParseKeysStatus,
     OperatorMotion,
@@ -10,11 +10,10 @@ import {
     ParseRegisterPartSuccess,
     ParseCountPartSuccess,
     ParseOperatorPartSuccess,
-    ParseOperatorMotionSuccess
+    ParseOperatorMotionSuccess,
 } from './parseKeysTypes';
 import { Action } from './actionTypes';
 import { VimRange } from './vimRangeTypes';
-
 
 export function arrayStartsWith<T>(prefix: T[], xs: T[]) {
     if (xs.length < prefix.length) {
@@ -119,7 +118,7 @@ function parseCountPart(keys: string[]): ParseCountPartSuccess {
     if (match) {
         return {
             kind: 'success',
-            count: parseInt(match[0]),
+            count: parseInt(match[0], 10),
             rest: keys.slice(match[0].length),
         };
     } else {
@@ -154,10 +153,10 @@ function parseOperatorMotionPart(
     vimState: VimState,
     keys: string[],
     editor: vscode.TextEditor,
-    motions: OperatorMotion[]
+    motions: OperatorMotion[],
 ): ParseFailure | ParseOperatorMotionSuccess {
     let could = false;
-    for (let motion of motions) {
+    for (const motion of motions) {
         const result = motion(vimState, keys, editor);
 
         if (result.kind === 'success') {
@@ -183,7 +182,13 @@ function parseOperatorMotionPart(
 export function parseKeysOperator(
     operatorKeys: string[],
     motions: OperatorMotion[],
-    operator: (vimState: VimState, editor: vscode.TextEditor, register: string, count: number, ranges: VimRange[]) => void
+    operator: (
+        vimState: VimState,
+        editor: vscode.TextEditor,
+        register: string,
+        count: number,
+        ranges: VimRange[],
+    ) => void,
 ): Action {
     return function(vimState, keys, editor) {
         const registerResult = parseRegisterPart(keys);
@@ -233,10 +238,9 @@ export function parseKeysOperator(
     };
 }
 
-
 export function createOperatorMotionExactKeys(
     matchKeys: string[],
-    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange
+    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange,
 ): OperatorMotion {
     return function(vimState, keys, editor) {
         if (arrayEquals(keys, matchKeys)) {
@@ -264,7 +268,12 @@ export function createOperatorMotionExactKeys(
 export function createOperatorMotionRegex(
     doesPattern: RegExp,
     couldPattern: RegExp,
-    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position, match: RegExpMatchArray) => VimRange
+    f: (
+        vimState: VimState,
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        match: RegExpMatchArray,
+    ) => VimRange,
 ): OperatorMotion {
     return function(vimState, keys, editor) {
         const keysStr = keys.join('');
