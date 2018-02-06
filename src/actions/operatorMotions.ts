@@ -5,7 +5,7 @@ import { createOperatorMotionExactKeys, createOperatorMotionRegex } from '../par
 import { OperatorMotion } from '../parseKeysTypes';
 import { searchForward, searchBackward } from '../searchUtils';
 import * as positionUtils from '../positionUtils';
-import { wordRanges } from '../motionsTop';
+import { wordRanges } from '../wordUtils';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
