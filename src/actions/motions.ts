@@ -21,6 +21,7 @@ import * as positionUtils from '../positionUtils';
 import { VimState } from '../vimStateTypes';
 import { wordRanges } from '../wordUtils';
 import { searchForward, searchBackward } from '../searchUtils';
+import { paragraphForward, paragraphBackward } from '../paragraphUtils';
 
 export const motions: Action[] = [
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
@@ -179,6 +180,16 @@ export const motions: Action[] = [
     parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             return new vscode.Position(document.lineCount - 1, 0);
+        });
+    }),
+    parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            return new vscode.Position(paragraphForward(document, position.line), 0);
+        });
+    }),
+    parseKeysExact(['{'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            return new vscode.Position(paragraphBackward(document, position.line), 0);
         });
     }),
 ];

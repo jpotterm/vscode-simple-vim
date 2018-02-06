@@ -6,6 +6,7 @@ import { OperatorMotion } from '../parseKeysTypes';
 import { searchForward, searchBackward } from '../searchUtils';
 import * as positionUtils from '../positionUtils';
 import { wordRanges } from '../wordUtils';
+import { paragraphForward, paragraphBackward } from '../paragraphUtils';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
@@ -195,5 +196,23 @@ export const operatorMotions: OperatorMotion[] = [
                 linewise: false,
             };
         }
+    }),
+    createOperatorMotionExactKeys(['}'], function(vimState, document, position) {
+        return {
+            range: new vscode.Range(
+                position.with({ character: 0 }),
+                new vscode.Position(paragraphForward(document, position.line), 0),
+            ),
+            linewise: true,
+        };
+    }),
+    createOperatorMotionExactKeys(['{'], function(vimState, document, position) {
+        return {
+            range: new vscode.Range(
+                new vscode.Position(paragraphBackward(document, position.line), 0),
+                position.with({ character: 0 }),
+            ),
+            linewise: true,
+        };
     }),
 ];
