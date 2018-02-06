@@ -62,7 +62,7 @@ export function down({ document, position, selectionIndex, vimState }: MotionArg
 
 const NON_WORD_CHARACTERS = '/\\()"\':,.;<>~!@#$%^&*|+=[]{}`?-';
 
-function wordRanges(text: string): { start: number, end: number }[] {
+export function wordRanges(text: string): { start: number, end: number }[] {
     enum State {
         Whitespace,
         Word,
