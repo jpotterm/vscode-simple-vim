@@ -12,13 +12,32 @@ import { VimRange } from '../vimRangeTypes';
 
 export const operators: Action[] = [
     parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        ranges.forEach(function(range, i) {
-            delete_(vimState, editor, i + register, count, range);
+        cursorsToRangesStart(editor, ranges);
+
+        editor.edit(function(editBuilder) {
+            ranges.forEach(function(range) {
+                let vscodeRange = range.range;
+
+                if (range.linewise) {
+                    const end = range.range.end;
+                    vscodeRange = new vscode.Range(
+                        range.range.start,
+                        new vscode.Position(end.line + 1, 0),
+                    );
+                }
+
+                editBuilder.delete(vscodeRange);
+            })
         });
     }),
     parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        ranges.forEach(function(range, i) {
-            change(vimState, editor, i + register, count, range);
+        cursorsToRangesStart(editor, ranges);
+
+        editor.edit(function(editBuilder) {
+            ranges.forEach(function(range) {
+                editBuilder.delete(range.range);
+            });
+
         });
 
         enterInsertMode(vimState);
@@ -43,24 +62,9 @@ export const operators: Action[] = [
     }),
 ];
 
-function delete_(vimState: VimState, editor: vscode.TextEditor, register: string, count: number, range: VimRange) {
-    editor.edit(function(editBuilder) {
-        let vscodeRange = range.range;
-
-        if (range.linewise) {
-            const end = range.range.end;
-            vscodeRange = new vscode.Range(
-                range.range.start,
-                new vscode.Position(end.line + 1, 0),
-            );
-        }
-
-        editBuilder.delete(vscodeRange);
-    });
-}
-
-function change(vimState: VimState, editor: vscode.TextEditor, register: string, count: number, range: VimRange) {
-    editor.edit(function(editBuilder) {
-        editBuilder.delete(range.range);
+function cursorsToRangesStart(editor: vscode.TextEditor, ranges: VimRange[]) {
+    editor.selections = editor.selections.map(function(selection, i) {
+        const newPosition = ranges[i].range.start;
+        return new vscode.Selection(newPosition, newPosition);
     });
 }

@@ -7,6 +7,8 @@ import { searchForward, searchBackward } from '../searchUtils';
 import * as positionUtils from '../positionUtils';
 import { wordRanges } from '../wordUtils';
 import { paragraphForward, paragraphBackward } from '../paragraphUtils';
+import { VimRange } from '../vimRangeTypes';
+import { VimState } from '../vimStateTypes';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
@@ -215,4 +217,161 @@ export const operatorMotions: OperatorMotion[] = [
             linewise: true,
         };
     }),
+
+    createOperatorMotionExactKeys(['i', "'"], createInnerQuoteHandler("'")),
+    createOperatorMotionExactKeys(['a', "'"], createOuterQuoteHandler("'")),
+
+    createOperatorMotionExactKeys(['i', '"'], createInnerQuoteHandler('"')),
+    createOperatorMotionExactKeys(['a', '"'], createOuterQuoteHandler('"')),
+
+    createOperatorMotionExactKeys(['i', '('], createInnerBracketHandler('(', ')')),
+    createOperatorMotionExactKeys(['a', '('], createOuterBracketHandler('(', ')')),
+
+    createOperatorMotionExactKeys(['i', '{'], createInnerBracketHandler('{', '}')),
+    createOperatorMotionExactKeys(['a', '{'], createOuterBracketHandler('{', '}')),
+
+    createOperatorMotionExactKeys(['i', '['], createInnerBracketHandler('[', ']')),
+    createOperatorMotionExactKeys(['a', '['], createOuterBracketHandler('[', ']')),
+
+    createOperatorMotionExactKeys(['i', '<'], createInnerBracketHandler('<', '>')),
+    createOperatorMotionExactKeys(['a', '<'], createOuterBracketHandler('<', '>')),
 ];
+
+function createInnerBracketHandler(
+    openingString: string,
+    closingString: string,
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
+    return function(vimState, document, position) {
+        const start = searchBackward(document, openingString, position);
+        const end = searchForward(document, closingString, position);
+
+        if (start && end) {
+            return {
+                range: new vscode.Range(start.with({ character: start.character + 1 }), end),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    };
+}
+
+function createOuterBracketHandler(
+    openingString: string,
+    closingString: string,
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
+    return function(vimState, document, position) {
+        const start = searchBackward(document, openingString, position);
+        const end = searchForward(document, closingString, position);
+
+        if (start && end) {
+            return {
+                range: new vscode.Range(start, end.with({ character: end.character + 1 })),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    };
+}
+
+function createInnerQuoteHandler(
+    quoteChar: string,
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
+    return function(vimState, document, position) {
+        const lineText = document.lineAt(position.line).text;
+        const ranges = quoteRanges(quoteChar, lineText);
+        const result = findQuoteRange(ranges, position);
+
+        if (result) {
+            return {
+                range: new vscode.Range(
+                    position.with({ character: result.start + 1 }),
+                    position.with({ character: result.end })
+                ),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    };
+}
+
+function createOuterQuoteHandler(
+    quoteChar: string,
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
+    return function(vimState, document, position) {
+        const lineText = document.lineAt(position.line).text;
+        const ranges = quoteRanges(quoteChar, lineText);
+        const result = findQuoteRange(ranges, position);
+
+        if (result) {
+            return {
+                range: new vscode.Range(
+                    position.with({ character: result.start }),
+                    position.with({ character: result.end + 1 })
+                ),
+                linewise: false,
+            };
+        } else {
+            return {
+                range: new vscode.Range(position, position),
+                linewise: false,
+            };
+        }
+    };
+}
+
+type CharacterRange = {
+    start: number;
+    end: number;
+};
+
+function findQuoteRange(ranges: CharacterRange[], position: vscode.Position): CharacterRange | undefined {
+    const insideResult = ranges.find(x => x.start <= position.character && x.end >= position.character);
+
+    if (insideResult) {
+        return insideResult;
+    }
+
+    const outsideResult = ranges.find(x => x.start > position.character);
+
+    if (outsideResult) {
+        return outsideResult;
+    }
+
+    return undefined;
+}
+
+function quoteRanges(quoteChar: string, s: string): CharacterRange[] {
+    let stateInQuote = false;
+    let stateStartIndex = 0;
+    const ranges = [];
+
+    for (let i = 0; i < s.length; ++i) {
+        if (s[i] === quoteChar) {
+            if (stateInQuote) {
+                ranges.push({
+                    start: stateStartIndex,
+                    end: i,
+                });
+
+                stateInQuote = false;
+            } else {
+                stateInQuote = true;
+                stateStartIndex = i;
+            }
+        }
+    }
+
+    return ranges;
+}
