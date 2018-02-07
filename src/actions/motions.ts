@@ -44,10 +44,10 @@ export const motions: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        setDesiredColumns(editor, vimState);
+    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(outerVimState, editor) {
+        setDesiredColumns(editor, outerVimState);
 
-        execMotion(vimState, function({ document, position, selectionIndex, vimState }) {
+        execMotion(outerVimState, function({ document, position, selectionIndex, vimState }) {
             if (position.line === 0) {
                 return position;
             }
@@ -60,10 +60,10 @@ export const motions: Action[] = [
             );
         });
     }),
-    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        setDesiredColumns(editor, vimState);
+    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(outerVimState, editor) {
+        setDesiredColumns(editor, outerVimState);
 
-        execMotion(vimState, function({ document, position, selectionIndex, vimState }) {
+        execMotion(outerVimState, function({ document, position, selectionIndex, vimState }) {
             if (position.line === document.lineCount - 1) {
                 return position;
             }
@@ -124,8 +124,8 @@ export const motions: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(vimState, match, function({ document, position, match }) {
+    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
+        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
             const fromPosition = position.with({ character: position.character + 1 });
             const result = searchForward(document, match[1], fromPosition);
 
@@ -136,8 +136,8 @@ export const motions: Action[] = [
             }
         });
     }),
-    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(vimState, match, function({ document, position, match }) {
+    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
+        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
             const fromPosition = position.with({ character: position.character - 1 });
             const result = searchBackward(document, match[1], fromPosition);
 
@@ -148,8 +148,8 @@ export const motions: Action[] = [
             }
         });
     }),
-    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(vimState, match, function({ document, position, match }) {
+    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
+        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
             const lineText = document.lineAt(position.line).text;
             const result = lineText.indexOf(match[1], position.character + 1);
 
@@ -160,8 +160,8 @@ export const motions: Action[] = [
             }
         });
     }),
-    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
-        execRegexMotion(vimState, match, function({ document, position, match }) {
+    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
+        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
             const lineText = document.lineAt(position.line).text;
             const result = lineText.lastIndexOf(match[1], position.character - 1);
 

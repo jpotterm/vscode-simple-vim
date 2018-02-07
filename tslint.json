@@ -6,7 +6,7 @@
     ],
     "jsRules": {},
     "rules": {
-        "quotemark": [true, "single"],
+        "quotemark": [true, "single", "avoid-escape"],
         "ordered-imports": false,
         "only-arrow-functions": false,
         "curly": false,

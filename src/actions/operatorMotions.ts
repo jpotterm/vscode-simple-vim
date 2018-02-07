@@ -293,7 +293,7 @@ function createInnerQuoteHandler(
             return {
                 range: new vscode.Range(
                     position.with({ character: result.start + 1 }),
-                    position.with({ character: result.end })
+                    position.with({ character: result.end }),
                 ),
                 linewise: false,
             };
@@ -318,7 +318,7 @@ function createOuterQuoteHandler(
             return {
                 range: new vscode.Range(
                     position.with({ character: result.start }),
-                    position.with({ character: result.end + 1 })
+                    position.with({ character: result.end + 1 }),
                 ),
                 linewise: false,
             };

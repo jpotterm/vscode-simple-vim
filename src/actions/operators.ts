@@ -27,7 +27,7 @@ export const operators: Action[] = [
                 }
 
                 editBuilder.delete(vscodeRange);
-            })
+            });
         });
     }),
     parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
