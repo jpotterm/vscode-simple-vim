@@ -14,21 +14,11 @@ export const operators: Action[] = [
     parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {
         cursorsToRangesStart(editor, ranges);
 
-        editor.edit(function(editBuilder) {
-            ranges.forEach(function(range) {
-                let vscodeRange = range.range;
+        delete_(editor, ranges);
 
-                if (range.linewise) {
-                    const end = range.range.end;
-                    vscodeRange = new vscode.Range(
-                        range.range.start,
-                        new vscode.Position(end.line + 1, 0),
-                    );
-                }
-
-                editBuilder.delete(vscodeRange);
-            });
-        });
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+            enterNormalMode(vimState);
+        }
     }),
     parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
         cursorsToRangesStart(editor, ranges);
@@ -44,12 +34,7 @@ export const operators: Action[] = [
         removeTypeSubscription(vimState);
     }),
     parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
-        vimState.registers[register] = ranges.map(function(range) {
-            return {
-                contents: editor.document.getText(range.range),
-                linewise: range.linewise,
-            };
-        });
+        yank(vimState, editor, register, ranges);
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             // Move cursor to start of yanked text
@@ -60,11 +45,48 @@ export const operators: Action[] = [
             enterNormalMode(vimState);
         }
     }),
+    parseKeysOperator(['y', 'd'], operatorMotions, function(vimState, editor, register, count, ranges) {
+        cursorsToRangesStart(editor, ranges);
+
+        yank(vimState, editor, register, ranges);
+        delete_(editor, ranges);
+
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+            enterNormalMode(vimState);
+        }
+    }),
 ];
 
 function cursorsToRangesStart(editor: vscode.TextEditor, ranges: VimRange[]) {
     editor.selections = editor.selections.map(function(selection, i) {
         const newPosition = ranges[i].range.start;
         return new vscode.Selection(newPosition, newPosition);
+    });
+}
+
+function delete_(editor: vscode.TextEditor, ranges: VimRange[]) {
+    editor.edit(function(editBuilder) {
+        ranges.forEach(function(range) {
+            let vscodeRange = range.range;
+
+            if (range.linewise) {
+                const end = range.range.end;
+                vscodeRange = new vscode.Range(
+                    range.range.start,
+                    new vscode.Position(end.line + 1, 0),
+                );
+            }
+
+            editBuilder.delete(vscodeRange);
+        });
+    });
+}
+
+function yank(vimState: VimState, editor: vscode.TextEditor, register: string, ranges: VimRange[]) {
+    vimState.registers[register] = ranges.map(function(range) {
+        return {
+            contents: editor.document.getText(range.range),
+            linewise: range.linewise,
+        };
     });
 }

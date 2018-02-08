@@ -14,4 +14,6 @@ export type VimState = {
     desiredColumns: number[];
     keysPressed: string[];
     registers: { [index: string]: Regsiter[] };
+    semicolonAction: (vimState: VimState, editor: vscode.TextEditor) => void;
+    commaAction: (vimState: VimState, editor: vscode.TextEditor) => void;
 };

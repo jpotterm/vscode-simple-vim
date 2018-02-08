@@ -124,53 +124,49 @@ export const motions: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
-        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
-            const fromPosition = position.with({ character: position.character + 1 });
-            const result = searchForward(document, match[1], fromPosition);
+    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        findForward(vimState, editor, match);
 
-            if (result) {
-                return result;
-            } else {
-                return position;
-            }
-        });
+        vimState.semicolonAction = function(innerVimState, innerEditor) {
+            findForward(innerVimState, innerEditor, match);
+        };
+
+        vimState.commaAction = function(innerVimState, innerEditor) {
+            findBackward(innerVimState, innerEditor, match);
+        };
     }),
-    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
-        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
-            const fromPosition = position.with({ character: position.character - 1 });
-            const result = searchBackward(document, match[1], fromPosition);
+    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        findBackward(vimState, editor, match);
 
-            if (result) {
-                return result;
-            } else {
-                return position;
-            }
-        });
+        vimState.semicolonAction = function(innerVimState, innerEditor) {
+            findBackward(innerVimState, innerEditor, match);
+        };
+
+        vimState.commaAction = function(innerVimState, innerEditor) {
+            findForward(innerVimState, innerEditor, match);
+        };
     }),
-    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
-        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
-            const lineText = document.lineAt(position.line).text;
-            const result = lineText.indexOf(match[1], position.character + 1);
+    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        tillForward(vimState, editor, match);
 
-            if (result >= 0) {
-                return position.with({ character: result });
-            } else {
-                return position;
-            }
-        });
+        vimState.semicolonAction = function(innerVimState, innerEditor) {
+            tillForward(innerVimState, innerEditor, match);
+        };
+
+        vimState.commaAction = function(innerVimState, innerEditor) {
+            tillBackward(innerVimState, innerEditor, match);
+        };
     }),
-    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, outerMatch) {
-        execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
-            const lineText = document.lineAt(position.line).text;
-            const result = lineText.lastIndexOf(match[1], position.character - 1);
+    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+        tillBackward(vimState, editor, match);
 
-            if (result >= 0) {
-                return position.with({ character: result });
-            } else {
-                return position;
-            }
-        });
+        vimState.semicolonAction = function(innerVimState, innerEditor) {
+            tillBackward(innerVimState, innerEditor, match);
+        };
+
+        vimState.commaAction = function(innerVimState, innerEditor) {
+            tillForward(innerVimState, innerEditor, match);
+        };
     }),
     parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
@@ -191,6 +187,22 @@ export const motions: Action[] = [
         execMotion(vimState, function({ document, position }) {
             return new vscode.Position(paragraphBackward(document, position.line), 0);
         });
+    }),
+    parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            const lineLength = document.lineAt(position.line).text.length;
+            return position.with({ character: Math.max(lineLength - 1, 0) });
+        });
+
+        vimState.desiredColumns = editor.selections.map(() => Infinity);
+    }),
+    parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            const line = document.lineAt(position.line);
+            return position.with({ character: line.firstNonWhitespaceCharacterIndex });
+        });
+
+        vimState.desiredColumns = [];
     }),
 ];
 
@@ -279,5 +291,70 @@ function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void 
         vimState.desiredColumns = editor.selections.map(function(selection) {
             return vscodeToVimVisualSelection(document, selection).active.character;
         });
+    }
+}
+
+function findForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
+    execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
+        const fromPosition = position.with({ character: position.character + 1 });
+        const result = searchForward(document, match[1], fromPosition);
+
+        if (result) {
+            return result;
+        } else {
+            return position;
+        }
+    });
+}
+
+function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
+    execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
+        const fromPosition = positionLeftWrap(document, position);
+        const result = searchBackward(document, match[1], fromPosition);
+
+        if (result) {
+            return result;
+        } else {
+            return position;
+        }
+    });
+}
+
+function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
+    execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
+        const lineText = document.lineAt(position.line).text;
+        const result = lineText.indexOf(match[1], position.character + 1);
+
+        if (result >= 0) {
+            return position.with({ character: result });
+        } else {
+            return position;
+        }
+    });
+}
+
+function tillBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
+    execRegexMotion(vimState, outerMatch, function({ document, position, match }) {
+        const lineText = document.lineAt(position.line).text;
+        const result = lineText.lastIndexOf(match[1], position.character - 1);
+
+        if (result >= 0) {
+            return position.with({ character: result });
+        } else {
+            return position;
+        }
+    });
+}
+
+function positionLeftWrap(document: vscode.TextDocument, position: vscode.Position): vscode.Position {
+    if (position.character === 0) {
+        if (position.line === 0) {
+            return position;
+        } else {
+            const lineLength = document.lineAt(position.line - 1).text.length;
+            return new vscode.Position(position.line - 1, lineLength);
+        }
+    } else {
+        return position.with({ character: position.character - 1 });
     }
 }

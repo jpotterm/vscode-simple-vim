@@ -15,6 +15,8 @@ const globalVimState: VimState = {
     desiredColumns: [],
     keysPressed: [],
     registers: {},
+    semicolonAction: () => undefined,
+    commaAction: () => undefined,
 };
 
 function escapeHandler(vimState: VimState): void {

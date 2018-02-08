@@ -262,4 +262,13 @@ export const actions: Action[] = [
             };
         });
     }),
+    parseKeysExact(['x'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('deleteRight');
+    }),
+    parseKeysExact([';'], [Mode.Normal],  function(vimState, editor) {
+        vimState.semicolonAction(vimState, editor);
+    }),
+    parseKeysExact([','], [Mode.Normal],  function(vimState, editor) {
+        vimState.commaAction(vimState, editor);
+    }),
 ];
