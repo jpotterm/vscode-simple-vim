@@ -14,22 +14,28 @@ import { enterInsertMode, enterVisualMode, enterVisualLineMode, enterNormalMode 
 import * as positionUtils from '../positionUtils';
 import { removeTypeSubscription } from '../typeSubscription';
 import { arraySet } from '../arrayUtils';
+import { VimState } from '../vimStateTypes';
 
 export const actions: Action[] = [
-    parseKeysExact(['i'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+    parseKeysExact(['i'], [Mode.Normal],  function(vimState, editor) {
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
-    parseKeysExact(['I'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+
+    parseKeysExact(['I'], [Mode.Normal],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
-            const newPosition = selection.active.with({ character: 0 });
+            const character = editor.document.lineAt(selection.active.line).firstNonWhitespaceCharacterIndex;
+            const newPosition = selection.active.with({ character: character });
             return new vscode.Selection(newPosition, newPosition);
         });
 
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
-    parseKeysExact(['a'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+
+    parseKeysExact(['a'], [Mode.Normal],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
             const newPosition = positionUtils.right(editor.document, selection.active);
             return new vscode.Selection(newPosition, newPosition);
@@ -37,8 +43,10 @@ export const actions: Action[] = [
 
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
-    parseKeysExact(['A'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+
+    parseKeysExact(['A'], [Mode.Normal],  function(vimState, editor) {
         editor.selections = editor.selections.map(function(selection) {
             const lineLength = editor.document.lineAt(selection.active.line).text.length;
             const newPosition = selection.active.with({ character: lineLength });
@@ -47,7 +55,9 @@ export const actions: Action[] = [
 
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['v'], [Mode.Normal, Mode.VisualLine],  function(vimState, editor) {
         enterVisualMode(vimState);
 
@@ -59,6 +69,7 @@ export const actions: Action[] = [
             return new vscode.Selection(selection.active, positionUtils.right(editor.document, selection.active));
         });
     }),
+
     parseKeysExact(['V'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
         enterVisualLineMode(vimState);
 
@@ -73,6 +84,7 @@ export const actions: Action[] = [
             );
         });
     }),
+
     parseKeysExact(['p'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         const document = editor.document;
 
@@ -150,11 +162,14 @@ export const actions: Action[] = [
                 editor.selections = editor.selections.map(function(selection) {
                     return new vscode.Selection(selection.start, selection.start);
                 });
-            });
 
-            enterNormalMode(vimState);
+                enterNormalMode(vimState);
+            });
         }
+
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['P'], [Mode.Normal],  function(vimState, editor) {
         const document = editor.document;
 
@@ -188,69 +203,100 @@ export const actions: Action[] = [
                 }
             });
         });
+
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         vscode.commands.executeCommand('undo');
+        vimState.desiredColumns = [];
     }),
-    parseKeysExact(['d', 'd'], [Mode.Normal],  function(vimState, editor) {
-        const document = editor.document;
 
-        vscode.commands.executeCommand('editor.action.deleteLines').then(function() {
-            editor.selections = editor.selections.map(function(selection) {
-                const character = document.lineAt(selection.active.line).firstNonWhitespaceCharacterIndex;
-                const newPosition = selection.active.with({ character: character });
-                return new vscode.Selection(newPosition, newPosition);
+    parseKeysExact(['d', 'd'], [Mode.Normal],  function(vimState, editor) {
+        deleteLine(vimState, editor);
+        vimState.desiredColumns = [];
+    }),
+
+    parseKeysExact(['D'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('deleteAllRight');
+        vimState.desiredColumns = [];
+    }),
+
+    parseKeysExact(['c', 'c'], [Mode.Normal],  function(vimState, editor) {
+        editor.edit(function(editBuilder) {
+            editor.selections.forEach(function(selection) {
+                const line = editor.document.lineAt(selection.active.line);
+                editBuilder.delete(new vscode.Range(
+                    selection.active.with({ character: line.firstNonWhitespaceCharacterIndex }),
+                    selection.active.with({ character: line.text.length }),
+                ));
             });
         });
+
+        enterInsertMode(vimState);
+        vimState.desiredColumns = [];
     }),
+
+    parseKeysExact(['C'], [Mode.Normal],  function(vimState, editor) {
+        vscode.commands.executeCommand('deleteAllRight');
+        enterInsertMode(vimState);
+        vimState.desiredColumns = [];
+    }),
+
     parseKeysExact(['o'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('editor.action.insertLineAfter');
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['O'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('editor.action.insertLineBefore');
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['H'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['M'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortCenter', by: 'line' });
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['L'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortBottom', by: 'line' });
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['z', 't'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'top',
         });
     }),
+
     parseKeysExact(['z', 'z'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'center',
         });
     }),
+
     parseKeysExact(['z', 'b'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'bottom',
         });
     }),
-    parseKeysExact(['y', 'y'], [Mode.Normal],  function(vimState, editor) {
-        const document = editor.document;
-        const register = '"';
 
-        vimState.registers[register] = editor.selections.map(function(selection) {
-            return {
-                contents: document.lineAt(selection.active).text,
-                linewise: true,
-            };
-        });
+    parseKeysExact(['y', 'y'], [Mode.Normal],  function(vimState, editor) {
+        yankLine(vimState, editor);
     }),
+
     parseKeysExact(['Y'], [Mode.Normal],  function(vimState, editor) {
         const document = editor.document;
         const register = '"';
@@ -262,13 +308,42 @@ export const actions: Action[] = [
             };
         });
     }),
+
+    parseKeysExact(['y', 'd', 'd'], [Mode.Normal],  function(vimState, editor) {
+        yankLine(vimState, editor);
+        deleteLine(vimState, editor);
+        vimState.desiredColumns = [];
+    }),
+
     parseKeysExact(['x'], [Mode.Normal],  function(vimState, editor) {
         vscode.commands.executeCommand('deleteRight');
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact([';'], [Mode.Normal],  function(vimState, editor) {
         vimState.semicolonAction(vimState, editor);
     }),
+
     parseKeysExact([','], [Mode.Normal],  function(vimState, editor) {
         vimState.commaAction(vimState, editor);
     }),
 ];
+
+function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
+    vscode.commands.executeCommand('editor.action.deleteLines').then(function() {
+        editor.selections = editor.selections.map(function(selection) {
+            const character = editor.document.lineAt(selection.active.line).firstNonWhitespaceCharacterIndex;
+            const newPosition = selection.active.with({ character: character });
+            return new vscode.Selection(newPosition, newPosition);
+        });
+    });
+}
+
+function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
+    vimState.registers['"'] = editor.selections.map(function(selection) {
+        return {
+            contents: editor.document.lineAt(selection.active).text,
+            linewise: true,
+        };
+    });
+}

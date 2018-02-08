@@ -2,6 +2,46 @@
 
 const NON_WORD_CHARACTERS = '/\\()"\':,.;<>~!@#$%^&*|+=[]{}`?-';
 
+export function whitespaceWordRanges(text: string): { start: number, end: number }[] {
+    enum State {
+        Whitespace,
+        Word,
+    }
+
+    let state = State.Whitespace;
+    let startIndex = 0;
+    const ranges = [];
+
+    for (let i = 0; i < text.length; ++i) {
+        const char = text[i];
+
+        if (state === State.Whitespace) {
+            if (!isWhitespaceCharacter(char)) {
+                startIndex = i;
+                state = State.Word;
+            }
+        } else {
+            if (isWhitespaceCharacter(char)) {
+                ranges.push({
+                    start: startIndex,
+                    end: i - 1,
+                });
+
+                state = State.Whitespace;
+            }
+        }
+    }
+
+    if (state === State.Word) {
+        ranges.push({
+            start: startIndex,
+            end: text.length - 1,
+        });
+    }
+
+    return ranges;
+}
+
 export function wordRanges(text: string): { start: number, end: number }[] {
     enum State {
         Whitespace,

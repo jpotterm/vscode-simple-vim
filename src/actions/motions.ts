@@ -19,9 +19,10 @@ import {
 } from '../selectionUtils';
 import * as positionUtils from '../positionUtils';
 import { VimState } from '../vimStateTypes';
-import { wordRanges } from '../wordUtils';
+import { wordRanges, whitespaceWordRanges } from '../wordUtils';
 import { searchForward, searchBackward } from '../searchUtils';
 import { paragraphForward, paragraphBackward } from '../paragraphUtils';
+import { VimRange } from '../vimRangeTypes';
 
 export const motions: Action[] = [
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
@@ -34,6 +35,7 @@ export const motions: Action[] = [
 
         vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             const lineLength = document.lineAt(position.line).text.length;
@@ -44,6 +46,7 @@ export const motions: Action[] = [
 
         vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(outerVimState, editor) {
         setDesiredColumns(editor, outerVimState);
 
@@ -60,6 +63,7 @@ export const motions: Action[] = [
             );
         });
     }),
+
     parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(outerVimState, editor) {
         setDesiredColumns(editor, outerVimState);
 
@@ -76,54 +80,16 @@ export const motions: Action[] = [
             );
         });
     }),
-    parseKeysExact(['w'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(vimState, function({ document, position }) {
-            const lineText = document.lineAt(position.line).text;
-            const ranges = wordRanges(lineText);
 
-            const result = ranges.find(x => x.start > position.character);
+    parseKeysExact(['w'], [Mode.Normal, Mode.Visual], createWordForwardHandler(wordRanges)),
+    parseKeysExact(['W'], [Mode.Normal, Mode.Visual], createWordForwardHandler(whitespaceWordRanges)),
 
-            if (result) {
-                return position.with({ character: result.start });
-            } else {
-                return position;
-            }
-        });
+    parseKeysExact(['b'], [Mode.Normal, Mode.Visual], createWordBackwardHandler(wordRanges)),
+    parseKeysExact(['B'], [Mode.Normal, Mode.Visual], createWordBackwardHandler(whitespaceWordRanges)),
 
-        vimState.desiredColumns = [];
-    }),
-    parseKeysExact(['b'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(vimState, function({ document, position }) {
-            const lineText = document.lineAt(position.line).text;
-            const ranges = wordRanges(lineText);
+    parseKeysExact(['e'], [Mode.Normal, Mode.Visual], createWordEndHandler(wordRanges)),
+    parseKeysExact(['E'], [Mode.Normal, Mode.Visual], createWordEndHandler(whitespaceWordRanges)),
 
-            const result = ranges.reverse().find(x => x.start < position.character);
-
-            if (result) {
-                return position.with({ character: result.start });
-            } else {
-                return position;
-            }
-        });
-
-        vimState.desiredColumns = [];
-    }),
-    parseKeysExact(['e'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(vimState, function({ document, position }) {
-            const lineText = document.lineAt(position.line).text;
-            const ranges = wordRanges(lineText);
-
-            const result = ranges.find(x => x.end > position.character);
-
-            if (result) {
-                return position.with({ character: result.end });
-            } else {
-                return position;
-            }
-        });
-
-        vimState.desiredColumns = [];
-    }),
     parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         findForward(vimState, editor, match);
 
@@ -135,6 +101,7 @@ export const motions: Action[] = [
             findBackward(innerVimState, innerEditor, match);
         };
     }),
+
     parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         findBackward(vimState, editor, match);
 
@@ -146,6 +113,7 @@ export const motions: Action[] = [
             findForward(innerVimState, innerEditor, match);
         };
     }),
+
     parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         tillForward(vimState, editor, match);
 
@@ -157,6 +125,7 @@ export const motions: Action[] = [
             tillBackward(innerVimState, innerEditor, match);
         };
     }),
+
     parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
         tillBackward(vimState, editor, match);
 
@@ -168,26 +137,37 @@ export const motions: Action[] = [
             tillForward(innerVimState, innerEditor, match);
         };
     }),
+
     parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             return new vscode.Position(0, 0);
         });
+
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             return new vscode.Position(document.lineCount - 1, 0);
         });
+
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             return new vscode.Position(paragraphForward(document, position.line), 0);
         });
     }),
+
     parseKeysExact(['{'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             return new vscode.Position(paragraphBackward(document, position.line), 0);
         });
+
+        vimState.desiredColumns = [];
     }),
+
     parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             const lineLength = document.lineAt(position.line).text.length;
@@ -196,6 +176,7 @@ export const motions: Action[] = [
 
         vimState.desiredColumns = editor.selections.map(() => Infinity);
     }),
+
     parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
         execMotion(vimState, function({ document, position }) {
             const line = document.lineAt(position.line);
@@ -305,6 +286,8 @@ function findForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: 
             return position;
         }
     });
+
+    vimState.desiredColumns = [];
 }
 
 function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
@@ -318,6 +301,8 @@ function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch:
             return position;
         }
     });
+
+    vimState.desiredColumns = [];
 }
 
 function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
@@ -331,6 +316,8 @@ function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: 
             return position;
         }
     });
+
+    vimState.desiredColumns = [];
 }
 
 function tillBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
@@ -344,6 +331,8 @@ function tillBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch:
             return position;
         }
     });
+
+    vimState.desiredColumns = [];
 }
 
 function positionLeftWrap(document: vscode.TextDocument, position: vscode.Position): vscode.Position {
@@ -357,4 +346,67 @@ function positionLeftWrap(document: vscode.TextDocument, position: vscode.Positi
     } else {
         return position.with({ character: position.character - 1 });
     }
+}
+
+function createWordForwardHandler(
+    wordRangesFunction: (text: string) => { start: number; end: number }[],
+): (vimState: VimState, editor: vscode.TextEditor) => void {
+    return function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            const lineText = document.lineAt(position.line).text;
+            const ranges = wordRangesFunction(lineText);
+
+            const result = ranges.find(x => x.start > position.character);
+
+            if (result) {
+                return position.with({ character: result.start });
+            } else {
+                return position;
+            }
+        });
+
+        vimState.desiredColumns = [];
+    };
+}
+
+function createWordBackwardHandler(
+    wordRangesFunction: (text: string) => { start: number; end: number }[],
+): (vimState: VimState, editor: vscode.TextEditor) => void {
+    return function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            const lineText = document.lineAt(position.line).text;
+            const ranges = wordRangesFunction(lineText);
+
+            const result = ranges.reverse().find(x => x.start < position.character);
+
+            if (result) {
+                return position.with({ character: result.start });
+            } else {
+                return position;
+            }
+        });
+
+        vimState.desiredColumns = [];
+    };
+}
+
+function createWordEndHandler(
+    wordRangesFunction: (text: string) => { start: number; end: number }[],
+): (vimState: VimState, editor: vscode.TextEditor) => void {
+    return function(vimState, editor) {
+        execMotion(vimState, function({ document, position }) {
+            const lineText = document.lineAt(position.line).text;
+            const ranges = wordRangesFunction(lineText);
+
+            const result = ranges.find(x => x.end > position.character);
+
+            if (result) {
+                return position.with({ character: result.end });
+            } else {
+                return position;
+            }
+        });
+
+        vimState.desiredColumns = [];
+    };
 }

@@ -19,6 +19,8 @@ export const operators: Action[] = [
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             enterNormalMode(vimState);
         }
+
+        vimState.desiredColumns = [];
     }),
     parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
         cursorsToRangesStart(editor, ranges);
@@ -32,6 +34,7 @@ export const operators: Action[] = [
 
         enterInsertMode(vimState);
         removeTypeSubscription(vimState);
+        vimState.desiredColumns = [];
     }),
     parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
         yank(vimState, editor, register, ranges);
@@ -54,6 +57,8 @@ export const operators: Action[] = [
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             enterNormalMode(vimState);
         }
+
+        vimState.desiredColumns = [];
     }),
 ];
 
