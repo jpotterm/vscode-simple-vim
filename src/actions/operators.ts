@@ -48,7 +48,7 @@ export const operators: Action[] = [
             enterNormalMode(vimState);
         }
     }),
-    parseKeysOperator(['y', 'd'], operatorMotions, function(vimState, editor, register, count, ranges) {
+    parseKeysOperator(['r'], operatorMotions, function(vimState, editor, register, count, ranges) {
         cursorsToRangesStart(editor, ranges);
 
         yank(vimState, editor, register, ranges);

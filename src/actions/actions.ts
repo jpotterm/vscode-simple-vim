@@ -309,7 +309,7 @@ export const actions: Action[] = [
         });
     }),
 
-    parseKeysExact(['y', 'd', 'd'], [Mode.Normal],  function(vimState, editor) {
+    parseKeysExact(['r', 'r'], [Mode.Normal],  function(vimState, editor) {
         yankLine(vimState, editor);
         deleteLine(vimState, editor);
         vimState.desiredColumns = [];
