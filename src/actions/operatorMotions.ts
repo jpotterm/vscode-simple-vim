@@ -21,7 +21,7 @@ export const operatorMotions: OperatorMotion[] = [
     }),
     createOperatorMotionExactKeys(['h'], function(vimState, document, position) {
         return {
-            range: new vscode.Range(position, positionUtils.left(document, position)),
+            range: new vscode.Range(position, positionUtils.left(position)),
             linewise: false,
         };
     }),

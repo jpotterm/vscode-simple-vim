@@ -17,7 +17,7 @@ export function escapeHandler(vimState: VimState): void {
 
     if (vimState.mode === Mode.Insert) {
         editor.selections = editor.selections.map(function(selection) {
-            const newPosition = positionUtils.left(document, selection.active);
+            const newPosition = positionUtils.left(selection.active);
             return new vscode.Selection(newPosition, newPosition);
         });
 

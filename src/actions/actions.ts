@@ -126,7 +126,7 @@ export const actions: Action[] = [
                     } else {
                         // Cursor ends up after the insertion so move it one to
                         // the left so it's under the last inserted character
-                        const newPosition = positionUtils.left(document, selection.active);
+                        const newPosition = positionUtils.left(selection.active);
                         return new vscode.Selection(newPosition, newPosition);
                     }
                 });
@@ -145,7 +145,7 @@ export const actions: Action[] = [
                 });
             }).then(function() {
                 editor.selections = editor.selections.map(function(selection) {
-                    const newPosition = positionUtils.left(document, selection.active);
+                    const newPosition = positionUtils.left(selection.active);
                     return new vscode.Selection(newPosition, newPosition);
                 });
             });
@@ -200,7 +200,7 @@ export const actions: Action[] = [
                 } else {
                     // Cursor ends up after the insertion so move it one to
                     // the left so it's under the last inserted character
-                    const newPosition = positionUtils.left(document, selection.active);
+                    const newPosition = positionUtils.left(selection.active);
                     return new vscode.Selection(newPosition, newPosition);
                 }
             });
@@ -351,7 +351,7 @@ export const actions: Action[] = [
         const document = editor.document;
 
         editor.selections = editor.selections.map(function(selection) {
-            const position = selection.isReversed ? selection.active : positionUtils.left(document, selection.active);
+            const position = selection.isReversed ? selection.active : positionUtils.left(selection.active);
             const lineText = document.lineAt(position.line).text;
             const ranges = quoteRanges("'", lineText);
             const result = findQuoteRange(ranges, position);

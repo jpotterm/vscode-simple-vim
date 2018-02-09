@@ -1,7 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 
-export function left(document: vscode.TextDocument, position: vscode.Position, count: number = 1): vscode.Position {
+export function left(position: vscode.Position, count: number = 1): vscode.Position {
     return position.with({
         character: Math.max(position.character - count, 0),
     });

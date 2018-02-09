@@ -9,13 +9,13 @@ export function vscodeToVimVisualSelection(
 ): vscode.Selection {
     if (vscodeSelection.active.isBefore(vscodeSelection.anchor)) {
         return new vscode.Selection(
-            positionUtils.left(document, vscodeSelection.anchor),
+            positionUtils.left(vscodeSelection.anchor),
             vscodeSelection.active,
         );
     } else {
         return new vscode.Selection(
             vscodeSelection.anchor,
-            positionUtils.left(document, vscodeSelection.active),
+            positionUtils.left(vscodeSelection.active),
         );
     }
 }
