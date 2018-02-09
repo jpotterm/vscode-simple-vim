@@ -15,6 +15,8 @@ import * as positionUtils from '../positionUtils';
 import { removeTypeSubscription } from '../typeSubscription';
 import { arraySet } from '../arrayUtils';
 import { VimState } from '../vimStateTypes';
+import { indentLevelRange } from '../indentUtils';
+import { quoteRanges, findQuoteRange } from '../quoteUtils';
 
 export const actions: Action[] = [
     parseKeysExact(['i'], [Mode.Normal],  function(vimState, editor) {
@@ -326,6 +328,43 @@ export const actions: Action[] = [
 
     parseKeysExact([','], [Mode.Normal],  function(vimState, editor) {
         vimState.commaAction(vimState, editor);
+    }),
+
+    parseKeysExact(['i', 'i'], [Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        const document = editor.document;
+
+        editor.selections = editor.selections.map(function(selection) {
+            const simpleRange = indentLevelRange(document, selection.active.line);
+
+            return new vscode.Selection(
+                new vscode.Position(simpleRange.start, 0),
+                new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
+            );
+        });
+
+        if (vimState.mode === Mode.Visual) {
+            enterVisualLineMode(vimState);
+        }
+    }),
+
+    parseKeysExact(['i', "'"], [Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+        const document = editor.document;
+
+        editor.selections = editor.selections.map(function(selection) {
+            const position = selection.isReversed ? selection.active : positionUtils.left(document, selection.active);
+            const lineText = document.lineAt(position.line).text;
+            const ranges = quoteRanges("'", lineText);
+            const result = findQuoteRange(ranges, position);
+
+            if (result) {
+                return new vscode.Selection(
+                    position.with({ character: result.start + 1 }),
+                    position.with({ character: result.end }),
+                );
+            } else {
+                return selection;
+            }
+        });
     }),
 ];
 

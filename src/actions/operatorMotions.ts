@@ -9,6 +9,8 @@ import { wordRanges, whitespaceWordRanges } from '../wordUtils';
 import { paragraphForward, paragraphBackward } from '../paragraphUtils';
 import { VimRange } from '../vimRangeTypes';
 import { VimState } from '../vimStateTypes';
+import { quoteRanges, findQuoteRange } from '../quoteUtils';
+import { indentLevelRange } from '../indentUtils';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
@@ -196,6 +198,18 @@ export const operatorMotions: OperatorMotion[] = [
 
     createOperatorMotionExactKeys(['i', '<'], createInnerBracketHandler('<', '>')),
     createOperatorMotionExactKeys(['a', '<'], createOuterBracketHandler('<', '>')),
+
+    createOperatorMotionExactKeys(['i', 'i'], function(vimState, document, position) {
+        const simpleRange = indentLevelRange(document, position.line);
+
+        return {
+            range: new vscode.Range(
+                new vscode.Position(simpleRange.start, 0),
+                new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
+            ),
+            linewise: true,
+        };
+    }),
 ];
 
 function createInnerBracketHandler(
@@ -290,51 +304,6 @@ function createOuterQuoteHandler(
             };
         }
     };
-}
-
-type CharacterRange = {
-    start: number;
-    end: number;
-};
-
-function findQuoteRange(ranges: CharacterRange[], position: vscode.Position): CharacterRange | undefined {
-    const insideResult = ranges.find(x => x.start <= position.character && x.end >= position.character);
-
-    if (insideResult) {
-        return insideResult;
-    }
-
-    const outsideResult = ranges.find(x => x.start > position.character);
-
-    if (outsideResult) {
-        return outsideResult;
-    }
-
-    return undefined;
-}
-
-function quoteRanges(quoteChar: string, s: string): CharacterRange[] {
-    let stateInQuote = false;
-    let stateStartIndex = 0;
-    const ranges = [];
-
-    for (let i = 0; i < s.length; ++i) {
-        if (s[i] === quoteChar) {
-            if (stateInQuote) {
-                ranges.push({
-                    start: stateStartIndex,
-                    end: i,
-                });
-
-                stateInQuote = false;
-            } else {
-                stateInQuote = true;
-                stateStartIndex = i;
-            }
-        }
-    }
-
-    return ranges;
 }
 
 function createWordForwardHandler(
