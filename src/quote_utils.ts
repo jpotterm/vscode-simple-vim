@@ -42,4 +42,3 @@ export function quoteRanges(quoteChar: string, s: string): SimpleRange[] {
 
     return ranges;
 }
-

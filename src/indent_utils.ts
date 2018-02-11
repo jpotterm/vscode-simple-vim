@@ -5,8 +5,8 @@ import { SimpleRange } from './simple_range_types';
 
 export function indentLevelRange(document: vscode.TextDocument, lineNumber: number): SimpleRange {
     const indentLevel = findIndentLevel(document, lineNumber);
-    let rangeStart = indentLevelRangeBefore(document, lineNumber, indentLevel);
-    let rangeEnd = indentLevelRangeAfter(document, lineNumber + 1, indentLevel);
+    const rangeStart = indentLevelRangeBefore(document, lineNumber, indentLevel);
+    const rangeEnd = indentLevelRangeAfter(document, lineNumber + 1, indentLevel);
 
     if (rangeStart && rangeEnd) {
         return { start: rangeStart.start, end: rangeEnd.end };
@@ -25,7 +25,7 @@ function indentLevelRangeBefore(
     lineNumber: number,
     indentLevel: number,
 ): SimpleRange | undefined {
-    let result = undefined;
+    let result;
 
     for (let i = lineNumber; i >= 0; --i) {
         const line = document.lineAt(i);
@@ -53,7 +53,7 @@ function indentLevelRangeAfter(
     lineNumber: number,
     indentLevel: number,
 ): SimpleRange | undefined {
-    let result = undefined;
+    let result;
 
     for (let i = lineNumber; i < document.lineCount; ++i) {
         const line = document.lineAt(i);
