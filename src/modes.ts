@@ -1,8 +1,8 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { Mode } from './modesTypes';
-import { VimState } from './vimStateTypes';
+import { Mode } from './modes_types';
+import { VimState } from './vim_state_types';
 
 export function enterInsertMode(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;

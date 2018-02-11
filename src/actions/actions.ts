@@ -1,22 +1,22 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { Mode } from '../modesTypes';
-import { Action } from '../actionTypes';
+import { Mode } from '../modes_types';
+import { Action } from '../action_types';
 import {
     parseKeysExact,
     parseKeysOperator,
     createOperatorMotionExactKeys,
     parseKeysRegex,
     createOperatorMotionRegex,
-} from '../parseKeys';
+} from '../parse_keys';
 import { enterInsertMode, enterVisualMode, enterVisualLineMode, enterNormalMode } from '../modes';
-import * as positionUtils from '../positionUtils';
-import { removeTypeSubscription } from '../typeSubscription';
-import { arraySet } from '../arrayUtils';
-import { VimState } from '../vimStateTypes';
-import { indentLevelRange } from '../indentUtils';
-import { quoteRanges, findQuoteRange } from '../quoteUtils';
+import * as positionUtils from '../position_utils';
+import { removeTypeSubscription } from '../type_subscription';
+import { arraySet } from '../array_utils';
+import { VimState } from '../vim_state_types';
+import { indentLevelRange } from '../indent_utils';
+import { quoteRanges, findQuoteRange } from '../quote_utils';
 
 export const actions: Action[] = [
     parseKeysExact(['i'], [Mode.Normal],  function(vimState, editor) {

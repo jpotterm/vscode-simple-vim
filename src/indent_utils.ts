@@ -1,7 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { SimpleRange } from './simpleRangeTypes';
+import { SimpleRange } from './simple_range_types';
 
 export function indentLevelRange(document: vscode.TextDocument, lineNumber: number): SimpleRange {
     const indentLevel = findIndentLevel(document, lineNumber);

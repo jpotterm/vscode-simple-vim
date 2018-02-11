@@ -1,28 +1,28 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { Mode } from '../modesTypes';
-import { Action } from '../actionTypes';
+import { Mode } from '../modes_types';
+import { Action } from '../action_types';
 import {
     parseKeysExact,
     parseKeysOperator,
     createOperatorMotionExactKeys,
     parseKeysRegex,
     createOperatorMotionRegex,
-} from '../parseKeys';
+} from '../parse_keys';
 import { enterInsertMode, enterVisualMode, enterVisualLineMode, enterNormalMode } from '../modes';
 import {
     vscodeToVimVisualSelection,
     vimToVscodeVisualLineSelection,
     vimToVscodeVisualSelection,
     vscodeToVimVisualLineSelection,
-} from '../selectionUtils';
-import * as positionUtils from '../positionUtils';
-import { VimState } from '../vimStateTypes';
-import { wordRanges, whitespaceWordRanges } from '../wordUtils';
-import { searchForward, searchBackward } from '../searchUtils';
-import { paragraphForward, paragraphBackward } from '../paragraphUtils';
-import { VimRange } from '../vimRangeTypes';
+} from '../selection_utils';
+import * as positionUtils from '../position_utils';
+import { VimState } from '../vim_state_types';
+import { wordRanges, whitespaceWordRanges } from '../word_utils';
+import { searchForward, searchBackward } from '../search_utils';
+import { paragraphForward, paragraphBackward } from '../paragraph_utils';
+import { VimRange } from '../vim_range_types';
 
 export const motions: Action[] = [
     parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {

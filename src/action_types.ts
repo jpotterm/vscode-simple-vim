@@ -1,8 +1,8 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { VimState } from './vimStateTypes';
-import { ParseKeysStatus } from './parseKeysTypes';
+import { VimState } from './vim_state_types';
+import { ParseKeysStatus } from './parse_keys_types';
 
 export type Action = (
     vimState: VimState,

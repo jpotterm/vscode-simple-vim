@@ -1,8 +1,8 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { VimState } from './vimStateTypes';
-import { Mode } from './modesTypes';
+import { VimState } from './vim_state_types';
+import { Mode } from './modes_types';
 import {
     ParseKeysStatus,
     OperatorMotion,
@@ -11,9 +11,9 @@ import {
     ParseCountPartSuccess,
     ParseOperatorPartSuccess,
     ParseOperatorMotionSuccess,
-} from './parseKeysTypes';
-import { Action } from './actionTypes';
-import { VimRange } from './vimRangeTypes';
+} from './parse_keys_types';
+import { Action } from './action_types';
+import { VimRange } from './vim_range_types';
 
 export function arrayStartsWith<T>(prefix: T[], xs: T[]) {
     if (xs.length < prefix.length) {

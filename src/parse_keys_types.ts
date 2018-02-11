@@ -1,7 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
-import { VimState } from './vimStateTypes';
-import { VimRange } from './vimRangeTypes';
+import { VimState } from './vim_state_types';
+import { VimRange } from './vim_range_types';
 
 export enum ParseKeysStatus {
     YES,

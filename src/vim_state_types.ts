@@ -1,7 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { Mode } from './modesTypes';
+import { Mode } from './modes_types';
 
 type Regsiter = {
     contents: string;

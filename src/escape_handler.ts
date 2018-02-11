@@ -1,12 +1,12 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { VimState } from './vimStateTypes';
+import { VimState } from './vim_state_types';
 import { enterNormalMode } from './modes';
-import { addTypeSubscription } from './typeSubscription';
-import { typeHandler } from './typeHandler';
-import * as positionUtils from './positionUtils';
-import { Mode } from './modesTypes';
+import { addTypeSubscription } from './type_subscription';
+import { typeHandler } from './type_handler';
+import * as positionUtils from './position_utils';
+import { Mode } from './modes_types';
 
 export function escapeHandler(vimState: VimState): void {
     const editor = vscode.window.activeTextEditor;

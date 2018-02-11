@@ -1,9 +1,9 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { ParseKeysStatus } from './parseKeysTypes';
+import { ParseKeysStatus } from './parse_keys_types';
 import { actions } from './actions';
-import { VimState } from './vimStateTypes';
+import { VimState } from './vim_state_types';
 
 export function typeHandler(vimState: VimState, char: string): void {
     const editor = vscode.window.activeTextEditor;

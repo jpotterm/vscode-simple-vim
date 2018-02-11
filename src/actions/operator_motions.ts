@@ -1,16 +1,16 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { createOperatorMotionExactKeys, createOperatorMotionRegex } from '../parseKeys';
-import { OperatorMotion } from '../parseKeysTypes';
-import { searchForward, searchBackward } from '../searchUtils';
-import * as positionUtils from '../positionUtils';
-import { wordRanges, whitespaceWordRanges } from '../wordUtils';
-import { paragraphForward, paragraphBackward } from '../paragraphUtils';
-import { VimRange } from '../vimRangeTypes';
-import { VimState } from '../vimStateTypes';
-import { quoteRanges, findQuoteRange } from '../quoteUtils';
-import { indentLevelRange } from '../indentUtils';
+import { createOperatorMotionExactKeys, createOperatorMotionRegex } from '../parse_keys';
+import { OperatorMotion } from '../parse_keys_types';
+import { searchForward, searchBackward } from '../search_utils';
+import * as positionUtils from '../position_utils';
+import { wordRanges, whitespaceWordRanges } from '../word_utils';
+import { paragraphForward, paragraphBackward } from '../paragraph_utils';
+import { VimRange } from '../vim_range_types';
+import { VimState } from '../vim_state_types';
+import { quoteRanges, findQuoteRange } from '../quote_utils';
+import { indentLevelRange } from '../indent_utils';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {

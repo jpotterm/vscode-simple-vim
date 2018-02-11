@@ -1,14 +1,14 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { Action } from '../actionTypes';
-import { operatorMotions } from './operatorMotions';
-import { parseKeysOperator } from '../parseKeys';
+import { Action } from '../action_types';
+import { operatorMotions } from './operator_motions';
+import { parseKeysOperator } from '../parse_keys';
 import { enterInsertMode, enterNormalMode } from '../modes';
-import { removeTypeSubscription } from '../typeSubscription';
-import { VimState } from '../vimStateTypes';
-import { Mode } from '../modesTypes';
-import { VimRange } from '../vimRangeTypes';
+import { removeTypeSubscription } from '../type_subscription';
+import { VimState } from '../vim_state_types';
+import { Mode } from '../modes_types';
+import { VimRange } from '../vim_range_types';
 
 export const operators: Action[] = [
     parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {

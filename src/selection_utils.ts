@@ -1,7 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import * as positionUtils from './positionUtils';
+import * as positionUtils from './position_utils';
 
 export function vscodeToVimVisualSelection(
     document: vscode.TextDocument,

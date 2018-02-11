@@ -1,13 +1,13 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { Mode } from './modesTypes';
-import * as scrollCommands from './scrollCommands';
+import { Mode } from './modes_types';
+import * as scrollCommands from './scroll_commands';
 import { enterNormalMode, enterVisualMode } from './modes';
-import { typeHandler } from './typeHandler';
-import { addTypeSubscription, removeTypeSubscription } from './typeSubscription';
-import { VimState } from './vimStateTypes';
-import { escapeHandler } from './escapeHandler';
+import { typeHandler } from './type_handler';
+import { addTypeSubscription, removeTypeSubscription } from './type_subscription';
+import { VimState } from './vim_state_types';
+import { escapeHandler } from './escape_handler';
 
 const globalVimState: VimState = {
     typeSubscription: undefined,
