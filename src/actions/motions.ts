@@ -273,7 +273,10 @@ function execMotion(vimState: VimState, editor: vscode.TextEditor, motion: (args
         }
     });
 
-    editor.revealRange(new vscode.Range(editor.selection.active, editor.selection.active));
+    editor.revealRange(
+        new vscode.Range(editor.selection.active, editor.selection.active),
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport,
+    );
 }
 
 function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void {
