@@ -20,9 +20,14 @@ export function rightNormal(
     count: number = 1,
 ): vscode.Position {
     const lineLength = document.lineAt(position.line).text.length;
-    return position.with({
-        character: Math.min(position.character + count, lineLength - 1),
-    });
+
+    if (lineLength === 0) {
+        return position.with({ character: 0 });
+    } else {
+        return position.with({
+            character: Math.min(position.character + count, lineLength - 1),
+        });
+    }
 }
 
 export function lineEnd(document: vscode.TextDocument, position: vscode.Position): vscode.Position {

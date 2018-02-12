@@ -5,46 +5,22 @@ import { Mode } from './modes_types';
 import { VimState } from './vim_state_types';
 
 export function enterInsertMode(vimState: VimState): void {
-    const editor = vscode.window.activeTextEditor;
-
-    if (!editor) return;
-
     vimState.mode = Mode.Insert;
-    editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
-
     setModeContext('extension.simpleVim.insertMode');
 }
 
 export function enterNormalMode(vimState: VimState): void {
-    const editor = vscode.window.activeTextEditor;
-
-    if (!editor) return;
-
     vimState.mode = Mode.Normal;
-    editor.options.cursorStyle = vscode.TextEditorCursorStyle.Underline;
-
     setModeContext('extension.simpleVim.normalMode');
 }
 
 export function enterVisualMode(vimState: VimState): void {
-    const editor = vscode.window.activeTextEditor;
-
-    if (!editor) return;
-
     vimState.mode = Mode.Visual;
-    editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
-
     setModeContext('extension.simpleVim.visualMode');
 }
 
 export function enterVisualLineMode(vimState: VimState): void {
-    const editor = vscode.window.activeTextEditor;
-
-    if (!editor) return;
-
     vimState.mode = Mode.VisualLine;
-    editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
-
     setModeContext('extension.simpleVim.visualLineMode');
 }
 
@@ -59,4 +35,14 @@ function setModeContext(key: string) {
     modeKeys.forEach(function(modeKey) {
         vscode.commands.executeCommand('setContext', modeKey, key === modeKey);
     });
+}
+
+export function setModeCursorStyle(mode: Mode, editor: vscode.TextEditor): void {
+    if (mode === Mode.Insert) {
+        editor.options.cursorStyle = vscode.TextEditorCursorStyle.Line;
+    } else if (mode === Mode.Normal) {
+        editor.options.cursorStyle = vscode.TextEditorCursorStyle.Underline;
+    } else if (mode === Mode.Visual || mode === Mode.VisualLine) {
+        editor.options.cursorStyle = vscode.TextEditorCursorStyle.LineThin;
+    }
 }

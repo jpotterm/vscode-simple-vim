@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 
 import { VimState } from './vim_state_types';
-import { enterNormalMode } from './modes';
+import { enterNormalMode, setModeCursorStyle } from './modes';
 import { addTypeSubscription } from './type_subscription';
 import { typeHandler } from './type_handler';
 import * as positionUtils from './position_utils';
@@ -22,6 +22,7 @@ export function escapeHandler(vimState: VimState): void {
         });
 
         enterNormalMode(vimState);
+        setModeCursorStyle(vimState.mode, editor);
         addTypeSubscription(vimState, typeHandler);
     } else if (vimState.mode === Mode.Normal) {
         // Clear multiple cursors
@@ -35,6 +36,7 @@ export function escapeHandler(vimState: VimState): void {
         });
 
         enterNormalMode(vimState);
+        setModeCursorStyle(vimState.mode, editor);
     }  else if (vimState.mode === Mode.VisualLine) {
         editor.selections = editor.selections.map(function(selection) {
             const newPosition = selection.active.with({
@@ -44,6 +46,7 @@ export function escapeHandler(vimState: VimState): void {
         });
 
         enterNormalMode(vimState);
+        setModeCursorStyle(vimState.mode, editor);
     }
 
     vimState.keysPressed = [];

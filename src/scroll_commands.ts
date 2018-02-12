@@ -2,10 +2,6 @@
 import * as vscode from 'vscode';
 
 function editorScroll(to: string, by: string) {
-    const editor = vscode.window.activeTextEditor;
-
-    if (!editor) return;
-
     vscode.commands.executeCommand('editorScroll', {
         to: to,
         by: by,

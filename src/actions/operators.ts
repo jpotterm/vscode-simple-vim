@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { Action } from '../action_types';
 import { operatorMotions } from './operator_motions';
 import { parseKeysOperator } from '../parse_keys';
-import { enterInsertMode, enterNormalMode } from '../modes';
+import { enterInsertMode, enterNormalMode, setModeCursorStyle } from '../modes';
 import { removeTypeSubscription } from '../type_subscription';
 import { VimState } from '../vim_state_types';
 import { Mode } from '../modes_types';
@@ -18,6 +18,7 @@ export const operators: Action[] = [
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             enterNormalMode(vimState);
+            setModeCursorStyle(vimState.mode, editor);
         }
 
         vimState.desiredColumns = [];
@@ -33,6 +34,7 @@ export const operators: Action[] = [
         });
 
         enterInsertMode(vimState);
+        setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
         vimState.desiredColumns = [];
     }),
@@ -46,6 +48,7 @@ export const operators: Action[] = [
             });
 
             enterNormalMode(vimState);
+            setModeCursorStyle(vimState.mode, editor);
         }
     }),
     parseKeysOperator(['r'], operatorMotions, function(vimState, editor, register, count, ranges) {
@@ -56,6 +59,7 @@ export const operators: Action[] = [
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             enterNormalMode(vimState);
+            setModeCursorStyle(vimState.mode, editor);
         }
 
         vimState.desiredColumns = [];
