@@ -5,11 +5,7 @@ import { ParseKeysStatus } from './parse_keys_types';
 import { actions } from './actions';
 import { VimState } from './vim_state_types';
 
-export function typeHandler(vimState: VimState, char: string): void {
-    const editor = vscode.window.activeTextEditor;
-
-    if (!editor) return;
-
+export function typeHandler(vimState: VimState, editor: vscode.TextEditor, char: string): void {
     vimState.keysPressed.push(char);
 
     try {
