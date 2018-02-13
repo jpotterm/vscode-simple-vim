@@ -20,9 +20,9 @@ const globalVimState: VimState = {
 };
 
 function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChangeEvent): void {
-    const editor = vscode.window.activeTextEditor;
+    console.log('Selection change');
 
-    if (vimState.mode === Mode.Insert || !editor) return;
+    if (vimState.mode === Mode.Insert) return;
 
     vimState.desiredColumns = [];
 
@@ -31,7 +31,7 @@ function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChan
     // distinguishing that case from the rest.
     if (e.selections.some(selection => !selection.isEmpty) && vimState.mode === Mode.Normal) {
         enterVisualMode(vimState);
-        setModeCursorStyle(vimState.mode, editor);
+        setModeCursorStyle(vimState.mode, e.textEditor);
     }
 
     // The following code makes find/replace take extra clicks because after replacing it moves
@@ -58,6 +58,16 @@ function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChan
 
 function onDidChangeActiveTextEditor(vimState: VimState, editor: vscode.TextEditor | undefined) {
     if (!editor) return;
+
+    if (editor.selections.every(selection => selection.isEmpty)) {
+        if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
+            enterNormalMode(vimState);
+        }
+    } else {
+        if (vimState.mode === Mode.Normal) {
+            enterVisualMode(vimState);
+        }
+    }
 
     setModeCursorStyle(vimState.mode, editor);
 
