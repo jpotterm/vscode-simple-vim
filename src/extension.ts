@@ -20,18 +20,26 @@ const globalVimState: VimState = {
 };
 
 function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChangeEvent): void {
-    console.log('Selection change');
-
     if (vimState.mode === Mode.Insert) return;
 
     vimState.desiredColumns = [];
 
-    // It would be nice if we could also go from visual to normal mode when all selections are empty
-    // but visual mode on an empty line will yield an empty selection and there's no good way of
-    // distinguishing that case from the rest.
-    if (e.selections.some(selection => !selection.isEmpty) && vimState.mode === Mode.Normal) {
-        enterVisualMode(vimState);
-        setModeCursorStyle(vimState.mode, e.textEditor);
+    if (e.selections.every(selection => selection.isEmpty)) {
+        // It would be nice if we could always go from visual to normal mode when all selections are empty
+        // but visual mode on an empty line will yield an empty selection and there's no good way of
+        // distinguishing that case from the rest. So we only do it for mouse events.
+        if (
+            (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) &&
+            e.kind === vscode.TextEditorSelectionChangeKind.Mouse
+        ) {
+            enterNormalMode(vimState);
+            setModeCursorStyle(vimState.mode, e.textEditor);
+        }
+    } else {
+        if (vimState.mode === Mode.Normal) {
+            enterVisualMode(vimState);
+            setModeCursorStyle(vimState.mode, e.textEditor);
+        }
     }
 
     // The following code makes find/replace take extra clicks because after replacing it moves
