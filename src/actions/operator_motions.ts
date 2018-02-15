@@ -224,9 +224,19 @@ function createInnerBracketHandler(
         let end;
         if (currentChar === openingChar) {
             start = position;
-            end = searchForwardBracket(document, openingChar, closingChar, positionUtils.rightWrap(document, position));
+            end = searchForwardBracket(
+                document,
+                openingChar,
+                closingChar,
+                positionUtils.rightWrap(document, position),
+            );
         } else if (currentChar === closingChar) {
-            start = searchBackwardBracket(document, openingChar, closingChar, positionUtils.leftWrap(document, position));
+            start = searchBackwardBracket(
+                document,
+                openingChar,
+                closingChar,
+                positionUtils.leftWrap(document, position),
+            );
             end = position;
         } else {
             start = searchBackwardBracket(document, openingChar, closingChar, position);
