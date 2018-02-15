@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 import { createOperatorMotionExactKeys, createOperatorMotionRegex } from '../parse_keys';
 import { OperatorMotion } from '../parse_keys_types';
-import { searchForward, searchBackward } from '../search_utils';
+import { searchForward, searchBackward, searchBackwardBracket, searchForwardBracket } from '../search_utils';
 import * as positionUtils from '../position_utils';
 import { wordRanges, whitespaceWordRanges } from '../word_utils';
 import { paragraphForward, paragraphBackward } from '../paragraph_utils';
@@ -213,12 +213,25 @@ export const operatorMotions: OperatorMotion[] = [
 ];
 
 function createInnerBracketHandler(
-    openingString: string,
-    closingString: string,
+    openingChar: string,
+    closingChar: string,
 ): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
     return function(vimState, document, position) {
-        const start = searchBackward(document, openingString, position);
-        const end = searchForward(document, closingString, position);
+        const lineText = document.lineAt(position.line).text;
+        const currentChar = lineText[position.character];
+
+        let start;
+        let end;
+        if (currentChar === openingChar) {
+            start = position;
+            end = searchForwardBracket(document, openingChar, closingChar, positionUtils.rightWrap(document, position));
+        } else if (currentChar === closingChar) {
+            start = searchBackwardBracket(document, openingChar, closingChar, positionUtils.leftWrap(document, position));
+            end = position;
+        } else {
+            start = searchBackwardBracket(document, openingChar, closingChar, position);
+            end = searchForwardBracket(document, openingChar, closingChar, position);
+        }
 
         if (start && end) {
             return {
@@ -235,12 +248,12 @@ function createInnerBracketHandler(
 }
 
 function createOuterBracketHandler(
-    openingString: string,
-    closingString: string,
+    openingChar: string,
+    closingChar: string,
 ): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
     return function(vimState, document, position) {
-        const start = searchBackward(document, openingString, position);
-        const end = searchForward(document, closingString, position);
+        const start = searchBackwardBracket(document, openingChar, closingChar, position);
+        const end = searchForwardBracket(document, openingChar, closingChar, position);
 
         if (start && end) {
             return {

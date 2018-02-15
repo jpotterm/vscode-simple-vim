@@ -30,6 +30,33 @@ export function rightNormal(
     }
 }
 
+export function leftWrap(document: vscode.TextDocument, position: vscode.Position): vscode.Position {
+    if (position.character <= 0) {
+        if (position.line <= 0) {
+            return position;
+        } else {
+            const previousLineLength = document.lineAt(position.line - 1).text.length;
+            return new vscode.Position(position.line - 1, previousLineLength);
+        }
+    } else {
+        return position.with({ character: position.character - 1 });
+    }
+}
+
+export function rightWrap(document: vscode.TextDocument, position: vscode.Position): vscode.Position {
+    const lineLength = document.lineAt(position.line).text.length;
+
+    if (position.character >= lineLength) {
+        if (position.line >= document.lineCount - 1) {
+            return position;
+        } else {
+            return new vscode.Position(position.line + 1, 0);
+        }
+    } else {
+        return position.with({ character: position.character + 1 });
+    }
+}
+
 export function lineEnd(document: vscode.TextDocument, position: vscode.Position): vscode.Position {
     const lineLength = document.lineAt(position.line).text.length;
     return position.with({

@@ -36,3 +36,59 @@ export function searchBackward(
 
     return undefined;
 }
+
+export function searchForwardBracket(
+    document: vscode.TextDocument,
+    openingChar: string,
+    closingChar: string,
+    fromPosition: vscode.Position,
+): vscode.Position | undefined {
+    let n = 0;
+
+    for (let i = fromPosition.line; i < document.lineCount; ++i) {
+        const lineText = document.lineAt(i).text;
+        const fromIndex = i === fromPosition.line ? fromPosition.character : 0;
+
+        for (let j = fromIndex; j < lineText.length; ++j) {
+            if (lineText[j] === openingChar) {
+                ++n;
+            } else if (lineText[j] === closingChar) {
+                if (n === 0) {
+                    return new vscode.Position(i, j);
+                } else {
+                    --n;
+                }
+            }
+        }
+    }
+
+    return undefined;
+}
+
+export function searchBackwardBracket(
+    document: vscode.TextDocument,
+    openingChar: string,
+    closingChar: string,
+    fromPosition: vscode.Position,
+): vscode.Position | undefined {
+    let n = 0;
+
+    for (let i = fromPosition.line; i >= 0; --i) {
+        const lineText = document.lineAt(i).text;
+        const fromIndex = i === fromPosition.line ? fromPosition.character : lineText.length - 1;
+
+        for (let j = fromIndex; j >= 0; --j) {
+            if (lineText[j] === closingChar) {
+                ++n;
+            } else if (lineText[j] === openingChar) {
+                if (n === 0) {
+                    return new vscode.Position(i, j);
+                } else {
+                    --n;
+                }
+            }
+        }
+    }
+
+    return undefined;
+}
