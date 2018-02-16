@@ -22,10 +22,11 @@ export function findQuoteRange(ranges: SimpleRange[], position: vscode.Position)
 export function quoteRanges(quoteChar: string, s: string): SimpleRange[] {
     let stateInQuote = false;
     let stateStartIndex = 0;
+    let backslashCount = 0;
     const ranges = [];
 
     for (let i = 0; i < s.length; ++i) {
-        if (s[i] === quoteChar) {
+        if (s[i] === quoteChar && backslashCount % 2 === 0) {
             if (stateInQuote) {
                 ranges.push({
                     start: stateStartIndex,
@@ -37,6 +38,12 @@ export function quoteRanges(quoteChar: string, s: string): SimpleRange[] {
                 stateInQuote = true;
                 stateStartIndex = i;
             }
+        }
+
+        if (s[i] === '\\') {
+            ++backslashCount;
+        } else {
+            backslashCount = 0;
         }
     }
 
