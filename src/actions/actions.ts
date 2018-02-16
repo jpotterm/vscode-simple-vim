@@ -337,43 +337,45 @@ export const actions: Action[] = [
         vimState.commaAction(vimState, editor);
     }),
 
-    parseKeysExact(['i', 'i'], [Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        const document = editor.document;
+    // Use the s operator instead of these
 
-        editor.selections = editor.selections.map(function(selection) {
-            const simpleRange = indentLevelRange(document, selection.active.line);
+    // parseKeysExact(['i', 'i'], [Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+    //     const document = editor.document;
 
-            return new vscode.Selection(
-                new vscode.Position(simpleRange.start, 0),
-                new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
-            );
-        });
+    //     editor.selections = editor.selections.map(function(selection) {
+    //         const simpleRange = indentLevelRange(document, selection.active.line);
 
-        if (vimState.mode === Mode.Visual) {
-            enterVisualLineMode(vimState);
-            setModeCursorStyle(vimState.mode, editor);
-        }
-    }),
+    //         return new vscode.Selection(
+    //             new vscode.Position(simpleRange.start, 0),
+    //             new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
+    //         );
+    //     });
 
-    parseKeysExact(['i', "'"], [Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        const document = editor.document;
+    //     if (vimState.mode === Mode.Visual) {
+    //         enterVisualLineMode(vimState);
+    //         setModeCursorStyle(vimState.mode, editor);
+    //     }
+    // }),
 
-        editor.selections = editor.selections.map(function(selection) {
-            const position = selection.isReversed ? selection.active : positionUtils.left(selection.active);
-            const lineText = document.lineAt(position.line).text;
-            const ranges = quoteRanges("'", lineText);
-            const result = findQuoteRange(ranges, position);
+    // parseKeysExact(['i', "'"], [Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
+    //     const document = editor.document;
 
-            if (result) {
-                return new vscode.Selection(
-                    position.with({ character: result.start + 1 }),
-                    position.with({ character: result.end }),
-                );
-            } else {
-                return selection;
-            }
-        });
-    }),
+    //     editor.selections = editor.selections.map(function(selection) {
+    //         const position = selection.isReversed ? selection.active : positionUtils.left(selection.active);
+    //         const lineText = document.lineAt(position.line).text;
+    //         const ranges = quoteRanges("'", lineText);
+    //         const result = findQuoteRange(ranges, position);
+
+    //         if (result) {
+    //             return new vscode.Selection(
+    //                 position.with({ character: result.start + 1 }),
+    //                 position.with({ character: result.end }),
+    //             );
+    //         } else {
+    //             return selection;
+    //         }
+    //     });
+    // }),
 ];
 
 function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
