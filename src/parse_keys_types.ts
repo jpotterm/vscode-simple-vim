@@ -33,7 +33,7 @@ export type ParseOperatorPartSuccess = {
 
 export type ParseOperatorMotionSuccess = {
     kind: 'success';
-    ranges: VimRange[];
+    ranges: (VimRange | undefined)[];
 };
 
 export type ParseOperatorSuccess = {

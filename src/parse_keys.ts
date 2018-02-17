@@ -187,7 +187,7 @@ export function parseKeysOperator(
         editor: vscode.TextEditor,
         register: string,
         count: number,
-        ranges: VimRange[],
+        ranges: (VimRange | undefined)[],
     ) => void,
 ): Action {
     return function(vimState, keys, editor) {
@@ -211,7 +211,7 @@ export function parseKeysOperator(
             return operatorResult.status;
         }
 
-        let ranges: VimRange[];
+        let ranges: (VimRange | undefined)[];
         if (vimState.mode === Mode.Normal) {
             if (operatorResult.rest.length === 0) {
                 return ParseKeysStatus.MORE_INPUT;
@@ -240,7 +240,7 @@ export function parseKeysOperator(
 
 export function createOperatorMotionExactKeys(
     matchKeys: string[],
-    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange,
+    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined,
 ): OperatorMotion {
     return function(vimState, keys, editor) {
         if (arrayEquals(keys, matchKeys)) {
@@ -273,7 +273,7 @@ export function createOperatorMotionRegex(
         document: vscode.TextDocument,
         position: vscode.Position,
         match: RegExpMatchArray,
-    ) => VimRange,
+    ) => VimRange | undefined,
 ): OperatorMotion {
     return function(vimState, keys, editor) {
         const keysStr = keys.join('');

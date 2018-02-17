@@ -93,8 +93,9 @@ export const actions: Action[] = [
             editor.edit(function(editBuilder) {
                 editor.selections.forEach(function(selection, i) {
                     const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined || registerArray[i] === undefined) return;
+                    if (registerArray === undefined) return;
                     const register = registerArray[i];
+                    if (register === undefined) return;
 
                     if (register.linewise) {
                         const insertPosition = new vscode.Position(selection.active.line + 1, 0);
@@ -116,8 +117,9 @@ export const actions: Action[] = [
             }).then(function() {
                 editor.selections = editor.selections.map(function(selection, i) {
                     const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined || registerArray[i] === undefined) return selection;
+                    if (registerArray === undefined) return selection;
                     const register = registerArray[i];
+                    if (register === undefined) return selection;
 
                     if (register.linewise) {
                         const newPosition = new vscode.Position(selection.active.line + 1, 0);
@@ -134,8 +136,9 @@ export const actions: Action[] = [
             editor.edit(function(editBuilder) {
                 editor.selections.forEach(function(selection, i) {
                     const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined || registerArray[i] === undefined) return;
+                    if (registerArray === undefined) return;
                     const register = registerArray[i];
+                    if (register === undefined) return;
 
                     const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
 
@@ -155,8 +158,9 @@ export const actions: Action[] = [
             editor.edit(function(editBuilder) {
                 editor.selections.forEach(function(selection, i) {
                     const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined || registerArray[i] === undefined) return;
+                    if (registerArray === undefined) return;
                     const register = registerArray[i];
+                    if (register === undefined) return;
 
                     editBuilder.replace(selection, register.contents);
                 });
@@ -179,8 +183,9 @@ export const actions: Action[] = [
         editor.edit(function(editBuilder) {
             editor.selections.forEach(function(selection, i) {
                 const registerArray = vimState.registers['"'];
-                if (registerArray === undefined || registerArray[i] === undefined) return;
+                if (registerArray === undefined) return;
                 const register = registerArray[i];
+                if (register === undefined) return;
 
                 if (register.linewise) {
                     const insertPosition = new vscode.Position(selection.active.line, 0);
@@ -192,8 +197,9 @@ export const actions: Action[] = [
         }).then(function() {
             editor.selections = editor.selections.map(function(selection, i) {
                 const registerArray = vimState.registers['"'];
-                if (registerArray === undefined || registerArray[i] === undefined) return selection;
+                if (registerArray === undefined) return selection;
                 const register = registerArray[i];
+                if (register === undefined) return selection;
 
                 if (register.linewise) {
                     const newPosition = new vscode.Position(selection.active.line, 0);
