@@ -262,7 +262,7 @@ function getBracketRange(
     document: vscode.TextDocument,
     position: vscode.Position,
     openingChar: string,
-    closingChar: string
+    closingChar: string,
 ): vscode.Range | undefined {
     const lineText = document.lineAt(position.line).text;
     const currentChar = lineText[position.character];
