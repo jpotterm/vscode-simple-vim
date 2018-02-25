@@ -11,6 +11,7 @@ import { VimRange } from '../vim_range_types';
 import { VimState } from '../vim_state_types';
 import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { indentLevelRange } from '../indent_utils';
+import { SimpleRange } from '../simple_range_types';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
@@ -220,35 +221,14 @@ function createInnerBracketHandler(
     closingChar: string,
 ): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
     return function(vimState, document, position) {
-        const lineText = document.lineAt(position.line).text;
-        const currentChar = lineText[position.character];
+        const bracketRange = getBracketRange(document, position, openingChar, closingChar);
 
-        let start;
-        let end;
-        if (currentChar === openingChar) {
-            start = position;
-            end = searchForwardBracket(
-                document,
-                openingChar,
-                closingChar,
-                positionUtils.rightWrap(document, position),
-            );
-        } else if (currentChar === closingChar) {
-            start = searchBackwardBracket(
-                document,
-                openingChar,
-                closingChar,
-                positionUtils.leftWrap(document, position),
-            );
-            end = position;
-        } else {
-            start = searchBackwardBracket(document, openingChar, closingChar, position);
-            end = searchForwardBracket(document, openingChar, closingChar, position);
-        }
-
-        if (start && end) {
+        if (bracketRange) {
             return {
-                range: new vscode.Range(start.with({ character: start.character + 1 }), end),
+                range: new vscode.Range(
+                    bracketRange.start.with({ character: bracketRange.start.character + 1 }),
+                    bracketRange.end,
+                ),
                 linewise: false,
             };
         } else {
@@ -262,18 +242,59 @@ function createOuterBracketHandler(
     closingChar: string,
 ): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
     return function(vimState, document, position) {
-        const start = searchBackwardBracket(document, openingChar, closingChar, position);
-        const end = searchForwardBracket(document, openingChar, closingChar, position);
+        const bracketRange = getBracketRange(document, position, openingChar, closingChar);
 
-        if (start && end) {
+        if (bracketRange) {
             return {
-                range: new vscode.Range(start, end.with({ character: end.character + 1 })),
+                range: new vscode.Range(
+                    bracketRange.start,
+                    bracketRange.end.with({ character: bracketRange.end.character + 1 }),
+                ),
                 linewise: false,
             };
         } else {
             return undefined;
         }
     };
+}
+
+function getBracketRange(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    openingChar: string,
+    closingChar: string
+): vscode.Range | undefined {
+    const lineText = document.lineAt(position.line).text;
+    const currentChar = lineText[position.character];
+
+    let start;
+    let end;
+    if (currentChar === openingChar) {
+        start = position;
+        end = searchForwardBracket(
+            document,
+            openingChar,
+            closingChar,
+            positionUtils.rightWrap(document, position),
+        );
+    } else if (currentChar === closingChar) {
+        start = searchBackwardBracket(
+            document,
+            openingChar,
+            closingChar,
+            positionUtils.leftWrap(document, position),
+        );
+        end = position;
+    } else {
+        start = searchBackwardBracket(document, openingChar, closingChar, position);
+        end = searchForwardBracket(document, openingChar, closingChar, position);
+    }
+
+    if (start && end) {
+        return new vscode.Range(start, end);
+    } else {
+        return undefined;
+    }
 }
 
 function createInnerQuoteHandler(

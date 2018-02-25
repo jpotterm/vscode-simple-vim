@@ -313,20 +313,18 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['Y'], [Mode.Normal],  function(vimState, editor) {
-        const document = editor.document;
-        const register = '"';
-
-        vimState.registers[register] = editor.selections.map(function(selection) {
-            return {
-                contents: document.lineAt(selection.active).text.substring(selection.active.character),
-                linewise: false,
-            };
-        });
+        yankToEndOfLine(vimState, editor);
     }),
 
     parseKeysExact(['r', 'r'], [Mode.Normal],  function(vimState, editor) {
         yankLine(vimState, editor);
         deleteLine(vimState, editor);
+        vimState.desiredColumns = [];
+    }),
+
+    parseKeysExact(['R'], [Mode.Normal],  function(vimState, editor) {
+        yankToEndOfLine(vimState, editor);
+        vscode.commands.executeCommand('deleteAllRight');
         vimState.desiredColumns = [];
     }),
 
@@ -397,8 +395,17 @@ function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
 function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
     vimState.registers['"'] = editor.selections.map(function(selection) {
         return {
-            contents: editor.document.lineAt(selection.active).text,
+            contents: editor.document.lineAt(selection.active.line).text,
             linewise: true,
+        };
+    });
+}
+
+function yankToEndOfLine(vimState: VimState, editor: vscode.TextEditor): void {
+    vimState.registers['"'] = editor.selections.map(function(selection) {
+        return {
+            contents: editor.document.lineAt(selection.active.line).text.substring(selection.active.character),
+            linewise: false,
         };
     });
 }
