@@ -39,7 +39,7 @@ const OPEN_SLASH_GROUP = 1;
 const TAG_NAME_GROUP = 2;
 const CLOSE_SLASH_GROUP = 3;
 
-function getTags(document: vscode.TextDocument): PositionTag[] {
+export function getTags(document: vscode.TextDocument): PositionTag[] {
     return positionTags(document, matchTags(getPartialTags(document.getText())));
 }
 
@@ -81,14 +81,26 @@ function matchTags(partialTags: PartialTag[]): OffsetTag[] {
                 opening: partialTag.range,
             });
         } else if (partialTag.kind === 'closing') {
-            let stackTag = popUntilTagName(openingStack, partialTag.name);
+            let stackTag = openingStack.pop();
 
-            if (stackTag) {
-                tags.push({
-                    name: partialTag.name,
-                    opening: stackTag.range,
-                    closing: partialTag.range,
-                });
+            while (stackTag) {
+                if (stackTag.name === partialTag.name) {
+                    tags.push({
+                        name: stackTag.name,
+                        opening: stackTag.range,
+                        closing: partialTag.range,
+                    });
+
+                    break;
+                } else {
+                    // Treat unclosed tags as self-closing because that's often the case in HTML
+                    tags.push({
+                        name: stackTag.name,
+                        opening: stackTag.range,
+                    });
+                }
+
+                stackTag = openingStack.pop();
             }
         }
     });

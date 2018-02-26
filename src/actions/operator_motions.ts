@@ -12,6 +12,8 @@ import { VimState } from '../vim_state_types';
 import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { indentLevelRange } from '../indent_utils';
 import { SimpleRange } from '../simple_range_types';
+import { getTags } from '../tag_utils';
+import { arrayFindLast } from '../array_utils';
 
 export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['l'], function(vimState, document, position) {
@@ -201,6 +203,74 @@ export const operatorMotions: OperatorMotion[] = [
 
     createOperatorMotionExactKeys(['i', '<'], createInnerBracketHandler('<', '>')),
     createOperatorMotionExactKeys(['a', '<'], createOuterBracketHandler('<', '>')),
+
+    createOperatorMotionExactKeys(['i', 't'], function(vimState, document, position) {
+        const tags = getTags(document);
+
+        const closestTag = arrayFindLast(tags, tag => {
+            if (tag.closing) {
+                return (
+                    position.isAfterOrEqual(tag.opening.start) &&
+                    position.isBeforeOrEqual(tag.closing.end)
+                );
+            } else {
+                // Self-closing tags have no inside
+                return false;
+            }
+        });
+
+        if (closestTag) {
+            if (closestTag.closing) {
+                return {
+                    range: new vscode.Range(
+                        closestTag.opening.end.with({ character: closestTag.opening.end.character + 1 }),
+                        closestTag.closing.start,
+                    ),
+                    linewise: false,
+                };
+            } else {
+                throw new Error('We should have already filtered out self-closing tags above');
+            }
+        } else {
+            return undefined;
+        }
+    }),
+
+    createOperatorMotionExactKeys(['a', 't'], function(vimState, document, position) {
+        const tags = getTags(document);
+
+        const closestTag = arrayFindLast(tags, tag => {
+            const afterStart = position.isAfterOrEqual(tag.opening.start);
+
+            if (tag.closing) {
+                return afterStart && position.isBeforeOrEqual(tag.closing.end);
+            } else {
+                return afterStart && position.isBeforeOrEqual(tag.opening.end);
+            }
+        });
+
+        if (closestTag) {
+            if (closestTag.closing) {
+                return {
+                    range: new vscode.Range(
+                        closestTag.opening.start,
+                        closestTag.closing.end.with({ character: closestTag.closing.end.character + 1 }),
+                    ),
+                    linewise: false,
+                };
+            } else {
+                return {
+                    range: new vscode.Range(
+                        closestTag.opening.start,
+                        closestTag.opening.end.with({ character: closestTag.opening.end.character + 1 }),
+                    ),
+                    linewise: false,
+                };
+            }
+        } else {
+            return undefined;
+        }
+    }),
 
     // TODO: return undefined?
     createOperatorMotionExactKeys(['i', 'i'], function(vimState, document, position) {
