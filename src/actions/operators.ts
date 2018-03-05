@@ -9,6 +9,7 @@ import { removeTypeSubscription } from '../type_subscription';
 import { VimState } from '../vim_state_types';
 import { Mode } from '../modes_types';
 import { VimRange } from '../vim_range_types';
+import { flashYankHighlight } from '../yank_highlight';
 
 export const operators: Action[] = [
     parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {
@@ -56,6 +57,15 @@ export const operators: Action[] = [
 
             enterNormalMode(vimState);
             setModeCursorStyle(vimState.mode, editor);
+        } else {
+            // Yank highlight
+            const highlightRanges: vscode.Range[] = [];
+            ranges.forEach(range => {
+                if (range) {
+                    highlightRanges.push(new vscode.Range(range.range.start, range.range.end));
+                }
+            });
+            flashYankHighlight(editor, highlightRanges);
         }
     }),
     parseKeysOperator(['r'], operatorMotions, function(vimState, editor, register, count, ranges) {

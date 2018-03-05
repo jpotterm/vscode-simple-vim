@@ -18,6 +18,7 @@ import { VimState } from '../vim_state_types';
 import { indentLevelRange } from '../indent_utils';
 import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { setVisualLineSelections } from '../visual_line_utils';
+import { flashYankHighlight } from '../yank_highlight';
 
 export const actions: Action[] = [
     parseKeysExact(['i'], [Mode.Normal],  function(vimState, editor) {
@@ -310,10 +311,30 @@ export const actions: Action[] = [
 
     parseKeysExact(['y', 'y'], [Mode.Normal],  function(vimState, editor) {
         yankLine(vimState, editor);
+
+        // Yank highlight
+        const highlightRanges = editor.selections.map(selection => {
+            const lineLength = editor.document.lineAt(selection.active.line).text.length;
+            return new vscode.Range(
+                selection.active.with({ character: 0 }),
+                selection.active.with({ character: lineLength }),
+            );
+        });
+        flashYankHighlight(editor, highlightRanges);
     }),
 
     parseKeysExact(['Y'], [Mode.Normal],  function(vimState, editor) {
         yankToEndOfLine(vimState, editor);
+
+        // Yank highlight
+        const highlightRanges = editor.selections.map(selection => {
+            const lineLength = editor.document.lineAt(selection.active.line).text.length;
+            return new vscode.Range(
+                selection.active,
+                selection.active.with({ character: lineLength }),
+            );
+        });
+        flashYankHighlight(editor, highlightRanges);
     }),
 
     parseKeysExact(['r', 'r'], [Mode.Normal],  function(vimState, editor) {
