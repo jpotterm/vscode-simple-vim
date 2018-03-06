@@ -20,7 +20,7 @@ import { setVisualLineSelections } from '../visual_line_utils';
 import { flashYankHighlight } from '../yank_highlight';
 
 export const actions: Action[] = [
-    parseKeysExact(['i'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['i'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
