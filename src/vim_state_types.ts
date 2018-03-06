@@ -10,7 +10,6 @@ type Regsiter = {
 export type VimState = {
     typeSubscription: vscode.Disposable | undefined;
     mode: Mode;
-    desiredColumns: number[];
     keysPressed: string[];
     registers: (Regsiter | undefined)[];
     semicolonAction: (vimState: VimState, editor: vscode.TextEditor) => void;

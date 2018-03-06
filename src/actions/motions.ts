@@ -28,16 +28,12 @@ export const motions: Action[] = [
         execMotion(vimState, editor, ({ document, position }) => {
             return positionUtils.rightNormal(document, position);
         });
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return positionUtils.left(position);
         });
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
@@ -47,26 +43,6 @@ export const motions: Action[] = [
                 setVisualLineSelections(editor);
             }
         });
-
-        // Experiment with having VSCode manage the desired columns for us. The advantage is that it's
-        // easier and it correctly handles the case when selection is changed by non-simple-vim commands
-        // or mouse. The disadvantage is that in normal mode, the cursor can land on the last character
-        // of the line which doesn't make sense in the vim worldview.
-
-        // setDesiredColumns(editor, outerVimState);
-
-        // execMotion(outerVimState, editor, ({ document, position, selectionIndex, vimState }) => {
-        //     if (position.line === 0) {
-        //         return position;
-        //     }
-
-        //     const newLineNumber = position.line - 1;
-        //     const newLineLength = document.lineAt(newLineNumber).text.length;
-        //     return new vscode.Position(
-        //         newLineNumber,
-        //         Math.min(vimState.desiredColumns[selectionIndex], Math.max(newLineLength - 1, 0)),
-        //     );
-        // });
     }),
 
     parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
@@ -76,26 +52,6 @@ export const motions: Action[] = [
                 setVisualLineSelections(editor);
             }
         });
-
-        // Experiment with having VSCode manage the desired columns for us. The advantage is that it's
-        // easier and it correctly handles the case when selection is changed by non-simple-vim commands
-        // or mouse. The disadvantage is that in normal mode, the cursor can land on the last character
-        // of the line which doesn't make sense in the vim worldview.
-
-        // setDesiredColumns(editor, outerVimState);
-
-        // execMotion(outerVimState, editor, ({ document, position, selectionIndex, vimState }) => {
-        //     if (position.line === document.lineCount - 1) {
-        //         return position;
-        //     }
-
-        //     const newLineNumber = position.line + 1;
-        //     const newLineLength = document.lineAt(newLineNumber).text.length;
-        //     return new vscode.Position(
-        //         newLineNumber,
-        //         Math.min(vimState.desiredColumns[selectionIndex], Math.max(newLineLength - 1, 0)),
-        //     );
-        // });
     }),
 
     parseKeysExact(['w'], [Mode.Normal, Mode.Visual], createWordForwardHandler(wordRanges)),
@@ -159,16 +115,12 @@ export const motions: Action[] = [
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(0, 0);
         });
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(document.lineCount - 1, 0);
         });
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
@@ -181,8 +133,6 @@ export const motions: Action[] = [
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(paragraphBackward(document, position.line), 0);
         });
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
@@ -190,8 +140,6 @@ export const motions: Action[] = [
             const lineLength = document.lineAt(position.line).text.length;
             return position.with({ character: Math.max(lineLength - 1, 0) });
         });
-
-        vimState.desiredColumns = editor.selections.map(() => Infinity);
     }),
 
     parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
@@ -199,8 +147,6 @@ export const motions: Action[] = [
             const line = document.lineAt(position.line);
             return position.with({ character: line.firstNonWhitespaceCharacterIndex });
         });
-
-        vimState.desiredColumns = [];
     }),
 ];
 
@@ -278,20 +224,6 @@ function execMotion(vimState: VimState, editor: vscode.TextEditor, motion: (args
     );
 }
 
-function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void {
-    if (vimState.desiredColumns.length !== 0) return;
-
-    const document = editor.document;
-
-    if (vimState.mode === Mode.Normal) {
-        vimState.desiredColumns = editor.selections.map(x => x.active.character);
-    } else {
-        vimState.desiredColumns = editor.selections.map(selection => {
-            return vscodeToVimVisualSelection(document, selection).active.character;
-        });
-    }
-}
-
 function findForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
     execRegexMotion(vimState, editor, outerMatch, ({ document, position, match }) => {
         const fromPosition = position.with({ character: position.character + 1 });
@@ -303,8 +235,6 @@ function findForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: 
             return position;
         }
     });
-
-    vimState.desiredColumns = [];
 }
 
 function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
@@ -318,8 +248,6 @@ function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch:
             return position;
         }
     });
-
-    vimState.desiredColumns = [];
 }
 
 function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
@@ -333,8 +261,6 @@ function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: 
             return position;
         }
     });
-
-    vimState.desiredColumns = [];
 }
 
 function tillBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
@@ -348,8 +274,6 @@ function tillBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch:
             return position;
         }
     });
-
-    vimState.desiredColumns = [];
 }
 
 function positionLeftWrap(document: vscode.TextDocument, position: vscode.Position): vscode.Position {
@@ -381,8 +305,6 @@ function createWordForwardHandler(
                 return position;
             }
         });
-
-        vimState.desiredColumns = [];
     };
 }
 
@@ -402,8 +324,6 @@ function createWordBackwardHandler(
                 return position;
             }
         });
-
-        vimState.desiredColumns = [];
     };
 }
 
@@ -423,7 +343,5 @@ function createWordEndHandler(
                 return position;
             }
         });
-
-        vimState.desiredColumns = [];
     };
 }

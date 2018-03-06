@@ -11,7 +11,6 @@ import { escapeHandler } from './escape_handler';
 const globalVimState: VimState = {
     typeSubscription: undefined,
     mode: Mode.Insert,
-    desiredColumns: [],
     keysPressed: [],
     registers: [],
     semicolonAction: () => undefined,
@@ -20,8 +19,6 @@ const globalVimState: VimState = {
 
 function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChangeEvent): void {
     if (vimState.mode === Mode.Insert) return;
-
-    vimState.desiredColumns = [];
 
     if (e.selections.every(selection => selection.isEmpty)) {
         // It would be nice if we could always go from visual to normal mode when all selections are empty
@@ -78,7 +75,6 @@ function onDidChangeActiveTextEditor(vimState: VimState, editor: vscode.TextEdit
 
     setModeCursorStyle(vimState.mode, editor);
 
-    vimState.desiredColumns = [];
     vimState.keysPressed = [];
 }
 

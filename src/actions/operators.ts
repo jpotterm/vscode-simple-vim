@@ -22,8 +22,6 @@ export const operators: Action[] = [
             enterNormalMode(vimState);
             setModeCursorStyle(vimState.mode, editor);
         }
-
-        vimState.desiredColumns = [];
     }),
     parseKeysOperator(['c'], operatorMotions, (vimState, editor, ranges) => {
         if (ranges.every(x => x === undefined)) return;
@@ -41,7 +39,6 @@ export const operators: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
     parseKeysOperator(['y'], operatorMotions, (vimState, editor, ranges) => {
         if (ranges.every(x => x === undefined)) return;
@@ -79,8 +76,6 @@ export const operators: Action[] = [
             enterNormalMode(vimState);
             setModeCursorStyle(vimState.mode, editor);
         }
-
-        vimState.desiredColumns = [];
     }),
     parseKeysOperator(['s'], operatorMotions, (vimState, editor, ranges) => {
         if (

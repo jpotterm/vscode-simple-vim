@@ -24,7 +24,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['I'], [Mode.Normal],  (vimState, editor) => {
@@ -37,7 +36,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['a'], [Mode.Normal],  (vimState, editor) => {
@@ -49,7 +47,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['A'], [Mode.Normal],  (vimState, editor) => {
@@ -62,7 +59,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['v'], [Mode.Normal, Mode.VisualLine],  (vimState, editor) => {
@@ -166,8 +162,6 @@ export const actions: Action[] = [
                 setModeCursorStyle(vimState.mode, editor);
             });
         }
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['P'], [Mode.Normal],  (vimState, editor) => {
@@ -201,23 +195,18 @@ export const actions: Action[] = [
                 }
             });
         });
-
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
         vscode.commands.executeCommand('undo');
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['d', 'd'], [Mode.Normal],  (vimState, editor) => {
         deleteLine(vimState, editor);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['D'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('deleteAllRight');
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['c', 'c'], [Mode.Normal],  (vimState, editor) => {
@@ -234,7 +223,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['C'], [Mode.Normal],  (vimState, editor) => {
@@ -242,7 +230,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['o'], [Mode.Normal],  (vimState, editor) => {
@@ -250,7 +237,6 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['O'], [Mode.Normal],  (vimState, editor) => {
@@ -258,22 +244,18 @@ export const actions: Action[] = [
         enterInsertMode(vimState);
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['H'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['M'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortCenter', by: 'line' });
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['L'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortBottom', by: 'line' });
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['z', 't'], [Mode.Normal],  (vimState, editor) => {
@@ -328,18 +310,15 @@ export const actions: Action[] = [
     parseKeysExact(['r', 'r'], [Mode.Normal],  (vimState, editor) => {
         yankLine(vimState, editor);
         deleteLine(vimState, editor);
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['R'], [Mode.Normal],  (vimState, editor) => {
         yankToEndOfLine(vimState, editor);
         vscode.commands.executeCommand('deleteAllRight');
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact(['x'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('deleteRight');
-        vimState.desiredColumns = [];
     }),
 
     parseKeysExact([';'], [Mode.Normal],  (vimState, editor) => {
