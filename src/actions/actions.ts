@@ -99,8 +99,9 @@ export const actions: Action[] = [
                     if (register === undefined) return;
 
                     if (register.linewise) {
-                        const insertPosition = new vscode.Position(selection.active.line + 1, 0);
-                        editBuilder.insert(insertPosition, register.contents + '\n');
+                        const lineLength = document.lineAt(selection.active.line).text.length;
+                        const insertPosition = new vscode.Position(selection.active.line, lineLength);
+                        editBuilder.insert(insertPosition, '\n' + register.contents);
                     } else {
                         const insertPosition = positionUtils.right(document, selection.active);
 
