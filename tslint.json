@@ -8,7 +8,6 @@
     "rules": {
         "quotemark": [true, "single", "avoid-escape"],
         "ordered-imports": false,
-        "only-arrow-functions": false,
         "curly": false,
         "object-literal-shorthand": false,
         "object-literal-sort-keys": false,
