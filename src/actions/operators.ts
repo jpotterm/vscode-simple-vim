@@ -11,7 +11,7 @@ import { VimRange } from '../vim_range_types';
 import { flashYankHighlight } from '../yank_highlight';
 
 export const operators: Action[] = [
-    parseKeysOperator(['d'], operatorMotions, (vimState, editor, register, count, ranges) => {
+    parseKeysOperator(['d'], operatorMotions, (vimState, editor, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -25,7 +25,7 @@ export const operators: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysOperator(['c'], operatorMotions, (vimState, editor, register, count, ranges) => {
+    parseKeysOperator(['c'], operatorMotions, (vimState, editor, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -43,10 +43,10 @@ export const operators: Action[] = [
         removeTypeSubscription(vimState);
         vimState.desiredColumns = [];
     }),
-    parseKeysOperator(['y'], operatorMotions, (vimState, editor, register, count, ranges) => {
+    parseKeysOperator(['y'], operatorMotions, (vimState, editor, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
-        yank(vimState, editor, register, ranges);
+        yank(vimState, editor, ranges);
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             // Move cursor to start of yanked text
@@ -67,12 +67,12 @@ export const operators: Action[] = [
             flashYankHighlight(editor, highlightRanges);
         }
     }),
-    parseKeysOperator(['r'], operatorMotions, (vimState, editor, register, count, ranges) => {
+    parseKeysOperator(['r'], operatorMotions, (vimState, editor, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
 
-        yank(vimState, editor, register, ranges);
+        yank(vimState, editor, ranges);
         delete_(editor, ranges);
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
@@ -82,7 +82,7 @@ export const operators: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysOperator(['s'], operatorMotions, (vimState, editor, register, count, ranges) => {
+    parseKeysOperator(['s'], operatorMotions, (vimState, editor, ranges) => {
         if (
             ranges.every(x => x === undefined) ||
             vimState.mode === Mode.Visual ||
@@ -144,15 +144,15 @@ function delete_(editor: vscode.TextEditor, ranges: (VimRange | undefined)[]) {
     });
 }
 
-function yank(vimState: VimState, editor: vscode.TextEditor, register: string, ranges: (VimRange | undefined)[]) {
-    vimState.registers[register] = ranges.map((range, i) => {
+function yank(vimState: VimState, editor: vscode.TextEditor, ranges: (VimRange | undefined)[]) {
+    vimState.registers = ranges.map((range, i) => {
         if (range) {
             return {
                 contents: editor.document.getText(range.range),
                 linewise: range.linewise,
             };
         } else {
-            return vimState.registers[register][i];
+            return vimState.registers[i];
         }
     });
 }

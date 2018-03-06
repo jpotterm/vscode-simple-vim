@@ -13,7 +13,7 @@ const globalVimState: VimState = {
     mode: Mode.Insert,
     desiredColumns: [],
     keysPressed: [],
-    registers: {},
+    registers: [],
     semicolonAction: () => undefined,
     commaAction: () => undefined,
 };

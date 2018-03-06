@@ -88,47 +88,6 @@ export function parseKeysRegex(
     };
 }
 
-function parseRegisterPart(keys: string[]): ParseFailure | ParseRegisterPartSuccess {
-    if (keys[0] === '"') {
-        if (keys.length < 2) {
-            return {
-                kind: 'failure',
-                status: ParseKeysStatus.MORE_INPUT,
-            };
-        } else {
-            return {
-                kind: 'success',
-                register: keys[1],
-                rest: keys.slice(2),
-            };
-        }
-    }
-
-    return {
-        kind: 'success',
-        register: '"',
-        rest: keys,
-    };
-}
-
-function parseCountPart(keys: string[]): ParseCountPartSuccess {
-    const match = keys.join('').match(/^\d+/);
-
-    if (match) {
-        return {
-            kind: 'success',
-            count: parseInt(match[0], 10),
-            rest: keys.slice(match[0].length),
-        };
-    } else {
-        return {
-            kind: 'success',
-            count: 1,
-            rest: keys,
-        };
-    }
-}
-
 function parseOperatorPart(keys: string[], operatorKeys: string[]): ParseFailure | ParseOperatorPartSuccess {
     if (arrayStartsWith(operatorKeys, keys)) {
         return {
@@ -184,28 +143,11 @@ export function parseKeysOperator(
     operator: (
         vimState: VimState,
         editor: vscode.TextEditor,
-        register: string,
-        count: number,
         ranges: (VimRange | undefined)[],
     ) => void,
 ): Action {
     return (vimState, keys, editor) => {
-        const registerResult = parseRegisterPart(keys);
-        if (registerResult.kind === 'failure') {
-            return registerResult.status;
-        }
-
-        if (registerResult.rest.length === 0) {
-            return ParseKeysStatus.MORE_INPUT;
-        }
-
-        const countResult = parseCountPart(registerResult.rest);
-
-        if (countResult.rest.length === 0) {
-            return ParseKeysStatus.MORE_INPUT;
-        }
-
-        const operatorResult = parseOperatorPart(countResult.rest, operatorKeys);
+        const operatorResult = parseOperatorPart(keys, operatorKeys);
         if (operatorResult.kind === 'failure') {
             return operatorResult.status;
         }
@@ -232,7 +174,7 @@ export function parseKeysOperator(
             });
         }
 
-        operator(vimState, editor, registerResult.register, countResult.count, ranges);
+        operator(vimState, editor, ranges);
         return ParseKeysStatus.YES;
     };
 }

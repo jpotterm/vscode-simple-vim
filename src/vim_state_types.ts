@@ -12,7 +12,7 @@ export type VimState = {
     mode: Mode;
     desiredColumns: number[];
     keysPressed: string[];
-    registers: { [index: string]: (Regsiter | undefined)[] };
+    registers: (Regsiter | undefined)[];
     semicolonAction: (vimState: VimState, editor: vscode.TextEditor) => void;
     commaAction: (vimState: VimState, editor: vscode.TextEditor) => void;
 };

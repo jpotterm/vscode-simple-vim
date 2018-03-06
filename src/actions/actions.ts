@@ -92,9 +92,7 @@ export const actions: Action[] = [
         if (vimState.mode === Mode.Normal) {
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
-                    const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined) return;
-                    const register = registerArray[i];
+                    const register = vimState.registers[i];
                     if (register === undefined) return;
 
                     if (register.linewise) {
@@ -117,9 +115,7 @@ export const actions: Action[] = [
                 });
             }).then(() => {
                 editor.selections = editor.selections.map((selection, i) => {
-                    const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined) return selection;
-                    const register = registerArray[i];
+                    const register = vimState.registers[i];
                     if (register === undefined) return selection;
 
                     if (register.linewise) {
@@ -136,9 +132,7 @@ export const actions: Action[] = [
         } else if (vimState.mode === Mode.Visual) {
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
-                    const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined) return;
-                    const register = registerArray[i];
+                    const register = vimState.registers[i];
                     if (register === undefined) return;
 
                     const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
@@ -158,9 +152,7 @@ export const actions: Action[] = [
         } else {
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
-                    const registerArray = vimState.registers['"'];
-                    if (registerArray === undefined) return;
-                    const register = registerArray[i];
+                    const register = vimState.registers[i];
                     if (register === undefined) return;
 
                     editBuilder.replace(selection, register.contents);
@@ -183,9 +175,7 @@ export const actions: Action[] = [
 
         editor.edit(editBuilder => {
             editor.selections.forEach((selection, i) => {
-                const registerArray = vimState.registers['"'];
-                if (registerArray === undefined) return;
-                const register = registerArray[i];
+                const register = vimState.registers[i];
                 if (register === undefined) return;
 
                 if (register.linewise) {
@@ -197,9 +187,7 @@ export const actions: Action[] = [
             });
         }).then(() => {
             editor.selections = editor.selections.map((selection, i) => {
-                const registerArray = vimState.registers['"'];
-                if (registerArray === undefined) return selection;
-                const register = registerArray[i];
+                const register = vimState.registers[i];
                 if (register === undefined) return selection;
 
                 if (register.linewise) {
@@ -414,7 +402,7 @@ function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
 }
 
 function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
-    vimState.registers['"'] = editor.selections.map(selection => {
+    vimState.registers = editor.selections.map(selection => {
         return {
             contents: editor.document.lineAt(selection.active.line).text,
             linewise: true,
@@ -423,7 +411,7 @@ function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
 }
 
 function yankToEndOfLine(vimState: VimState, editor: vscode.TextEditor): void {
-    vimState.registers['"'] = editor.selections.map(selection => {
+    vimState.registers = editor.selections.map(selection => {
         return {
             contents: editor.document.lineAt(selection.active.line).text.substring(selection.active.character),
             linewise: false,
