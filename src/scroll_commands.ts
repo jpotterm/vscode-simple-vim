@@ -1,4 +1,3 @@
-'use strict';
 import * as vscode from 'vscode';
 
 function editorScroll(to: string, by: string) {

@@ -1,4 +1,3 @@
-'use strict';
 import * as vscode from 'vscode';
 
 export function paragraphForward(document: vscode.TextDocument, line: number): number {

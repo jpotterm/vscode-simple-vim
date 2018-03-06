@@ -1,5 +1,5 @@
-'use strict';
 import * as vscode from 'vscode';
+
 import { VimState } from './vim_state_types';
 import { VimRange } from './vim_range_types';
 

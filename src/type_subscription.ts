@@ -1,5 +1,5 @@
-'use strict';
 import * as vscode from 'vscode';
+
 import { VimState } from './vim_state_types';
 
 export function addTypeSubscription(

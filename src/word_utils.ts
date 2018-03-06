@@ -1,5 +1,3 @@
-'use strict';
-
 const NON_WORD_CHARACTERS = '/\\()"\':,.;<>~!@#$%^&*|+=[]{}`?-';
 
 export function whitespaceWordRanges(text: string): { start: number, end: number }[] {

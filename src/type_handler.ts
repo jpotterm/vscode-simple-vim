@@ -1,4 +1,3 @@
-'use strict';
 import * as vscode from 'vscode';
 
 import { ParseKeysStatus } from './parse_keys_types';

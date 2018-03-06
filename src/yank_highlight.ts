@@ -1,4 +1,3 @@
-'use strict';
 import * as vscode from 'vscode';
 
 export function flashYankHighlight(editor: vscode.TextEditor, ranges: vscode.Range[]) {

@@ -1,4 +1,3 @@
-'use strict';
 import * as vscode from 'vscode';
 
 export function left(position: vscode.Position, count: number = 1): vscode.Position {

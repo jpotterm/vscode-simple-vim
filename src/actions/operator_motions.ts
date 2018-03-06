@@ -1,4 +1,3 @@
-'use strict';
 import * as vscode from 'vscode';
 
 import { createOperatorMotionExactKeys, createOperatorMotionRegex } from '../parse_keys';
