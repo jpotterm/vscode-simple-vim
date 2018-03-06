@@ -24,25 +24,25 @@ import { VimRange } from '../vim_range_types';
 import { setVisualLineSelections } from '../visual_line_utils';
 
 export const motions: Action[] = [
-    parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             return positionUtils.rightNormal(document, position);
         });
 
         vimState.desiredColumns = [];
     }),
 
-    parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             return positionUtils.left(position);
         });
 
         vimState.desiredColumns = [];
     }),
 
-    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(outerVimState, editor) {
+    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
         const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
-        vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'line', select: isVisual }).then(function() {
+        vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'line', select: isVisual }).then(() => {
             if (outerVimState.mode === Mode.VisualLine) {
                 setVisualLineSelections(editor);
             }
@@ -55,7 +55,7 @@ export const motions: Action[] = [
 
         // setDesiredColumns(editor, outerVimState);
 
-        // execMotion(outerVimState, editor, function({ document, position, selectionIndex, vimState }) {
+        // execMotion(outerVimState, editor, ({ document, position, selectionIndex, vimState }) => {
         //     if (position.line === 0) {
         //         return position;
         //     }
@@ -69,9 +69,9 @@ export const motions: Action[] = [
         // });
     }),
 
-    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(outerVimState, editor) {
+    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
         const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
-        vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'line', select: isVisual }).then(function() {
+        vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'line', select: isVisual }).then(() => {
             if (outerVimState.mode === Mode.VisualLine) {
                 setVisualLineSelections(editor);
             }
@@ -84,7 +84,7 @@ export const motions: Action[] = [
 
         // setDesiredColumns(editor, outerVimState);
 
-        // execMotion(outerVimState, editor, function({ document, position, selectionIndex, vimState }) {
+        // execMotion(outerVimState, editor, ({ document, position, selectionIndex, vimState }) => {
         //     if (position.line === document.lineCount - 1) {
         //         return position;
         //     }
@@ -107,86 +107,86 @@ export const motions: Action[] = [
     parseKeysExact(['e'], [Mode.Normal, Mode.Visual], createWordEndHandler(wordRanges)),
     parseKeysExact(['E'], [Mode.Normal, Mode.Visual], createWordEndHandler(whitespaceWordRanges)),
 
-    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
         findForward(vimState, editor, match);
 
-        vimState.semicolonAction = function(innerVimState, innerEditor) {
+        vimState.semicolonAction = (innerVimState, innerEditor) => {
             findForward(innerVimState, innerEditor, match);
         };
 
-        vimState.commaAction = function(innerVimState, innerEditor) {
+        vimState.commaAction = (innerVimState, innerEditor) => {
             findBackward(innerVimState, innerEditor, match);
         };
     }),
 
-    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
         findBackward(vimState, editor, match);
 
-        vimState.semicolonAction = function(innerVimState, innerEditor) {
+        vimState.semicolonAction = (innerVimState, innerEditor) => {
             findBackward(innerVimState, innerEditor, match);
         };
 
-        vimState.commaAction = function(innerVimState, innerEditor) {
+        vimState.commaAction = (innerVimState, innerEditor) => {
             findForward(innerVimState, innerEditor, match);
         };
     }),
 
-    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
         tillForward(vimState, editor, match);
 
-        vimState.semicolonAction = function(innerVimState, innerEditor) {
+        vimState.semicolonAction = (innerVimState, innerEditor) => {
             tillForward(innerVimState, innerEditor, match);
         };
 
-        vimState.commaAction = function(innerVimState, innerEditor) {
+        vimState.commaAction = (innerVimState, innerEditor) => {
             tillBackward(innerVimState, innerEditor, match);
         };
     }),
 
-    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  function(vimState, editor, match) {
+    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
         tillBackward(vimState, editor, match);
 
-        vimState.semicolonAction = function(innerVimState, innerEditor) {
+        vimState.semicolonAction = (innerVimState, innerEditor) => {
             tillBackward(innerVimState, innerEditor, match);
         };
 
-        vimState.commaAction = function(innerVimState, innerEditor) {
+        vimState.commaAction = (innerVimState, innerEditor) => {
             tillForward(innerVimState, innerEditor, match);
         };
     }),
 
-    parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(0, 0);
         });
 
         vimState.desiredColumns = [];
     }),
 
-    parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(document.lineCount - 1, 0);
         });
 
         vimState.desiredColumns = [];
     }),
 
-    parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(paragraphForward(document, position.line), 0);
         });
     }),
 
-    parseKeysExact(['{'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['{'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(paragraphBackward(document, position.line), 0);
         });
 
         vimState.desiredColumns = [];
     }),
 
-    parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             const lineLength = document.lineAt(position.line).text.length;
             return position.with({ character: Math.max(lineLength - 1, 0) });
         });
@@ -194,8 +194,8 @@ export const motions: Action[] = [
         vimState.desiredColumns = editor.selections.map(() => Infinity);
     }),
 
-    parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             const line = document.lineAt(position.line);
             return position.with({ character: line.firstNonWhitespaceCharacterIndex });
         });
@@ -225,7 +225,7 @@ function execRegexMotion(
     match: RegExpMatchArray,
     regexMotion: (args: RegexMotionArgs) => vscode.Position,
 ) {
-    return execMotion(vimState, editor, function(motionArgs) {
+    return execMotion(vimState, editor, motionArgs => {
         return regexMotion({
             ...motionArgs,
             match: match,
@@ -238,7 +238,7 @@ function execMotion(vimState: VimState, editor: vscode.TextEditor, motion: (args
 
     editor.selections = editor.selections.map(x => x);
 
-    editor.selections = editor.selections.map(function(selection, i) {
+    editor.selections = editor.selections.map((selection, i) => {
         if (vimState.mode === Mode.Normal) {
             const newPosition = motion({
                 document: document,
@@ -286,14 +286,14 @@ function setDesiredColumns(editor: vscode.TextEditor, vimState: VimState): void 
     if (vimState.mode === Mode.Normal) {
         vimState.desiredColumns = editor.selections.map(x => x.active.character);
     } else {
-        vimState.desiredColumns = editor.selections.map(function(selection) {
+        vimState.desiredColumns = editor.selections.map(selection => {
             return vscodeToVimVisualSelection(document, selection).active.character;
         });
     }
 }
 
 function findForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
-    execRegexMotion(vimState, editor, outerMatch, function({ document, position, match }) {
+    execRegexMotion(vimState, editor, outerMatch, ({ document, position, match }) => {
         const fromPosition = position.with({ character: position.character + 1 });
         const result = searchForward(document, match[1], fromPosition);
 
@@ -308,7 +308,7 @@ function findForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: 
 }
 
 function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
-    execRegexMotion(vimState, editor, outerMatch, function({ document, position, match }) {
+    execRegexMotion(vimState, editor, outerMatch, ({ document, position, match }) => {
         const fromPosition = positionLeftWrap(document, position);
         const result = searchBackward(document, match[1], fromPosition);
 
@@ -323,7 +323,7 @@ function findBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch:
 }
 
 function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
-    execRegexMotion(vimState, editor, outerMatch, function({ document, position, match }) {
+    execRegexMotion(vimState, editor, outerMatch, ({ document, position, match }) => {
         const lineText = document.lineAt(position.line).text;
         const result = lineText.indexOf(match[1], position.character + 1);
 
@@ -338,7 +338,7 @@ function tillForward(vimState: VimState, editor: vscode.TextEditor, outerMatch: 
 }
 
 function tillBackward(vimState: VimState, editor: vscode.TextEditor, outerMatch: RegExpMatchArray): void {
-    execRegexMotion(vimState, editor, outerMatch, function({ document, position, match }) {
+    execRegexMotion(vimState, editor, outerMatch, ({ document, position, match }) => {
         const lineText = document.lineAt(position.line).text;
         const result = lineText.lastIndexOf(match[1], position.character - 1);
 
@@ -368,8 +368,8 @@ function positionLeftWrap(document: vscode.TextDocument, position: vscode.Positi
 function createWordForwardHandler(
     wordRangesFunction: (text: string) => { start: number; end: number }[],
 ): (vimState: VimState, editor: vscode.TextEditor) => void {
-    return function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    return (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             const lineText = document.lineAt(position.line).text;
             const ranges = wordRangesFunction(lineText);
 
@@ -389,8 +389,8 @@ function createWordForwardHandler(
 function createWordBackwardHandler(
     wordRangesFunction: (text: string) => { start: number; end: number }[],
 ): (vimState: VimState, editor: vscode.TextEditor) => void {
-    return function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    return (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             const lineText = document.lineAt(position.line).text;
             const ranges = wordRangesFunction(lineText);
 
@@ -410,8 +410,8 @@ function createWordBackwardHandler(
 function createWordEndHandler(
     wordRangesFunction: (text: string) => { start: number; end: number }[],
 ): (vimState: VimState, editor: vscode.TextEditor) => void {
-    return function(vimState, editor) {
-        execMotion(vimState, editor, function({ document, position }) {
+    return (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
             const lineText = document.lineAt(position.line).text;
             const ranges = wordRangesFunction(lineText);
 

@@ -47,7 +47,7 @@ export function parseKeysExact(
     modes: Mode[],
     action: (vimState: VimState, editor: vscode.TextEditor) => void,
 ): Action {
-    return function(vimState, keys, editor) {
+    return (vimState, keys, editor) => {
         if (modes && modes.indexOf(vimState.mode) < 0) {
             return ParseKeysStatus.NO;
         }
@@ -69,7 +69,7 @@ export function parseKeysRegex(
     modes: Mode[],
     action: (vimState: VimState, editor: vscode.TextEditor, match: RegExpMatchArray) => void,
 ): Action {
-    return function(vimState, keys, editor) {
+    return (vimState, keys, editor) => {
         if (modes && modes.indexOf(vimState.mode) < 0) {
             return ParseKeysStatus.NO;
         }
@@ -189,7 +189,7 @@ export function parseKeysOperator(
         ranges: (VimRange | undefined)[],
     ) => void,
 ): Action {
-    return function(vimState, keys, editor) {
+    return (vimState, keys, editor) => {
         const registerResult = parseRegisterPart(keys);
         if (registerResult.kind === 'failure') {
             return registerResult.status;
@@ -223,11 +223,11 @@ export function parseKeysOperator(
 
             ranges = motionResult.ranges;
         } else if (vimState.mode === Mode.VisualLine) {
-            ranges = editor.selections.map(function(selection) {
+            ranges = editor.selections.map(selection => {
                 return { range: selection, linewise: true };
             });
         } else {
-            ranges = editor.selections.map(function(selection) {
+            ranges = editor.selections.map(selection => {
                 return { range: selection, linewise: false };
             });
         }
@@ -241,9 +241,9 @@ export function createOperatorMotionExactKeys(
     matchKeys: string[],
     f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined,
 ): OperatorMotion {
-    return function(vimState, keys, editor) {
+    return (vimState, keys, editor) => {
         if (arrayEquals(keys, matchKeys)) {
-            const ranges = editor.selections.map(function(selection) {
+            const ranges = editor.selections.map(selection => {
                 return f(vimState, editor.document, selection.active);
             });
             return {
@@ -274,12 +274,12 @@ export function createOperatorMotionRegex(
         match: RegExpMatchArray,
     ) => VimRange | undefined,
 ): OperatorMotion {
-    return function(vimState, keys, editor) {
+    return (vimState, keys, editor) => {
         const keysStr = keys.join('');
         const doesMatch = keysStr.match(doesPattern);
 
         if (doesMatch) {
-            const ranges = editor.selections.map(function(selection) {
+            const ranges = editor.selections.map(selection => {
                 return f(vimState, editor.document, selection.active, doesMatch);
             });
             return {

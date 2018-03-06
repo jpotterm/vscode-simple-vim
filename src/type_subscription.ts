@@ -6,7 +6,7 @@ export function addTypeSubscription(
     vimState: VimState,
     typeHandler: (vimState: VimState, char: string) => void,
 ): void {
-    vimState.typeSubscription = vscode.commands.registerCommand('type', function(e) {
+    vimState.typeSubscription = vscode.commands.registerCommand('type', e => {
         typeHandler(vimState, e.text);
     });
 }

@@ -47,7 +47,7 @@ function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChan
 
     // if (vimState.mode === Mode.Normal) {
     //     // Prevent cursor from landing on the last character of the line
-    //     editor.selections = editor.selections.map(function(selection, i) {
+    //     editor.selections = editor.selections.map((selection, i) => {
     //         const lineLength = editor.document.lineAt(selection.active.line).text.length;
 
     //         if (lineLength > 0 && selection.active.character === lineLength) {

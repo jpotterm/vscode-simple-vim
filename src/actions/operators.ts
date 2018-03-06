@@ -11,7 +11,7 @@ import { VimRange } from '../vim_range_types';
 import { flashYankHighlight } from '../yank_highlight';
 
 export const operators: Action[] = [
-    parseKeysOperator(['d'], operatorMotions, function(vimState, editor, register, count, ranges) {
+    parseKeysOperator(['d'], operatorMotions, (vimState, editor, register, count, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -25,13 +25,13 @@ export const operators: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysOperator(['c'], operatorMotions, function(vimState, editor, register, count, ranges) {
+    parseKeysOperator(['c'], operatorMotions, (vimState, editor, register, count, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
 
-        editor.edit(function(editBuilder) {
-            ranges.forEach(function(range) {
+        editor.edit(editBuilder => {
+            ranges.forEach(range => {
                 if (!range) return;
                 editBuilder.delete(range.range);
             });
@@ -43,14 +43,14 @@ export const operators: Action[] = [
         removeTypeSubscription(vimState);
         vimState.desiredColumns = [];
     }),
-    parseKeysOperator(['y'], operatorMotions, function(vimState, editor, register, count, ranges) {
+    parseKeysOperator(['y'], operatorMotions, (vimState, editor, register, count, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         yank(vimState, editor, register, ranges);
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
             // Move cursor to start of yanked text
-            editor.selections = editor.selections.map(function(selection) {
+            editor.selections = editor.selections.map(selection => {
                 return new vscode.Selection(selection.start, selection.start);
             });
 
@@ -67,7 +67,7 @@ export const operators: Action[] = [
             flashYankHighlight(editor, highlightRanges);
         }
     }),
-    parseKeysOperator(['r'], operatorMotions, function(vimState, editor, register, count, ranges) {
+    parseKeysOperator(['r'], operatorMotions, (vimState, editor, register, count, ranges) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -82,7 +82,7 @@ export const operators: Action[] = [
 
         vimState.desiredColumns = [];
     }),
-    parseKeysOperator(['s'], operatorMotions, function(vimState, editor, register, count, ranges) {
+    parseKeysOperator(['s'], operatorMotions, (vimState, editor, register, count, ranges) => {
         if (
             ranges.every(x => x === undefined) ||
             vimState.mode === Mode.Visual ||
@@ -91,7 +91,7 @@ export const operators: Action[] = [
             return;
         }
 
-        editor.selections = ranges.map(function(range, i) {
+        editor.selections = ranges.map((range, i) => {
             if (range) {
                 const start = range.range.start;
                 const end = range.range.end;
@@ -112,7 +112,7 @@ export const operators: Action[] = [
 ];
 
 function cursorsToRangesStart(editor: vscode.TextEditor, ranges: (VimRange | undefined)[]) {
-    editor.selections = editor.selections.map(function(selection, i) {
+    editor.selections = editor.selections.map((selection, i) => {
         const range = ranges[i];
 
         if (range) {
@@ -125,8 +125,8 @@ function cursorsToRangesStart(editor: vscode.TextEditor, ranges: (VimRange | und
 }
 
 function delete_(editor: vscode.TextEditor, ranges: (VimRange | undefined)[]) {
-    editor.edit(function(editBuilder) {
-        ranges.forEach(function(range) {
+    editor.edit(editBuilder => {
+        ranges.forEach(range => {
             if (!range) return;
 
             let vscodeRange = range.range;
@@ -145,7 +145,7 @@ function delete_(editor: vscode.TextEditor, ranges: (VimRange | undefined)[]) {
 }
 
 function yank(vimState: VimState, editor: vscode.TextEditor, register: string, ranges: (VimRange | undefined)[]) {
-    vimState.registers[register] = ranges.map(function(range, i) {
+    vimState.registers[register] = ranges.map((range, i) => {
         if (range) {
             return {
                 contents: editor.document.getText(range.range),
