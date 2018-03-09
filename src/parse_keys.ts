@@ -6,8 +6,6 @@ import {
     ParseKeysStatus,
     OperatorMotion,
     ParseFailure,
-    ParseRegisterPartSuccess,
-    ParseCountPartSuccess,
     ParseOperatorPartSuccess,
     ParseOperatorMotionSuccess,
 } from './parse_keys_types';

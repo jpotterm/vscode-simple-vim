@@ -2,20 +2,12 @@ import * as vscode from 'vscode';
 
 import { Mode } from '../modes_types';
 import { Action } from '../action_types';
-import {
-    parseKeysExact,
-    parseKeysOperator,
-    createOperatorMotionExactKeys,
-    parseKeysRegex,
-    createOperatorMotionRegex,
-} from '../parse_keys';
+import { parseKeysExact } from '../parse_keys';
 import { enterInsertMode, enterVisualMode, enterVisualLineMode, enterNormalMode, setModeCursorStyle } from '../modes';
 import * as positionUtils from '../position_utils';
 import { removeTypeSubscription } from '../type_subscription';
 import { arraySet } from '../array_utils';
 import { VimState } from '../vim_state_types';
-import { indentLevelRange } from '../indent_utils';
-import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { setVisualLineSelections } from '../visual_line_utils';
 import { flashYankHighlight } from '../yank_highlight';
 
@@ -165,8 +157,6 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['P'], [Mode.Normal],  (vimState, editor) => {
-        const document = editor.document;
-
         editor.edit(editBuilder => {
             editor.selections.forEach((selection, i) => {
                 const register = vimState.registers[i];
@@ -197,7 +187,7 @@ export const actions: Action[] = [
         });
     }),
 
-    parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  () => {
         vscode.commands.executeCommand('undo');
     }),
 
@@ -205,7 +195,7 @@ export const actions: Action[] = [
         deleteLine(vimState, editor);
     }),
 
-    parseKeysExact(['D'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['D'], [Mode.Normal],  () => {
         vscode.commands.executeCommand('deleteAllRight');
     }),
 
@@ -246,33 +236,33 @@ export const actions: Action[] = [
         removeTypeSubscription(vimState);
     }),
 
-    parseKeysExact(['H'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['H'], [Mode.Normal],  () => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
     }),
 
-    parseKeysExact(['M'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['M'], [Mode.Normal],  () => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortCenter', by: 'line' });
     }),
 
-    parseKeysExact(['L'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['L'], [Mode.Normal],  () => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortBottom', by: 'line' });
     }),
 
-    parseKeysExact(['z', 't'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['z', 't'], [Mode.Normal],  (_vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'top',
         });
     }),
 
-    parseKeysExact(['z', 'z'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['z', 'z'], [Mode.Normal],  (_vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'center',
         });
     }),
 
-    parseKeysExact(['z', 'b'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['z', 'b'], [Mode.Normal],  (_vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'bottom',
@@ -317,7 +307,7 @@ export const actions: Action[] = [
         vscode.commands.executeCommand('deleteAllRight');
     }),
 
-    parseKeysExact(['x'], [Mode.Normal],  (vimState, editor) => {
+    parseKeysExact(['x'], [Mode.Normal],  () => {
         vscode.commands.executeCommand('deleteRight');
     }),
 
@@ -370,7 +360,7 @@ export const actions: Action[] = [
     // }),
 ];
 
-function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
+function deleteLine(_vimState: VimState, editor: vscode.TextEditor): void {
     vscode.commands.executeCommand('editor.action.deleteLines').then(() => {
         editor.selections = editor.selections.map(selection => {
             const character = editor.document.lineAt(selection.active.line).firstNonWhitespaceCharacterIndex;
