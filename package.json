@@ -60,7 +60,7 @@
         "@types/node": "^7.0.52",
         "tslint": "^5.9.1",
         "tslint-no-circular-imports": "^0.2.1",
-        "typescript": "^2.7.1",
+        "typescript": "^2.7.2",
         "vscode": "^1.1.10"
     }
 }
