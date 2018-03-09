@@ -1,5 +1,3 @@
-import * as vscode from 'vscode';
-
 import { Action } from '../action_types';
 import { actions as subActions } from './actions';
 import { operators } from './operators';

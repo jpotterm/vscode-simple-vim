@@ -10,7 +10,6 @@ import { VimRange } from '../vim_range_types';
 import { VimState } from '../vim_state_types';
 import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { indentLevelRange } from '../indent_utils';
-import { SimpleRange } from '../simple_range_types';
 import { getTags } from '../tag_utils';
 import { arrayFindLast } from '../array_utils';
 

@@ -187,7 +187,7 @@ export const actions: Action[] = [
         });
     }),
 
-    parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  () => {
+    parseKeysExact(['u'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
         vscode.commands.executeCommand('undo');
     }),
 
@@ -195,7 +195,7 @@ export const actions: Action[] = [
         deleteLine(vimState, editor);
     }),
 
-    parseKeysExact(['D'], [Mode.Normal],  () => {
+    parseKeysExact(['D'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('deleteAllRight');
     }),
 
@@ -236,33 +236,33 @@ export const actions: Action[] = [
         removeTypeSubscription(vimState);
     }),
 
-    parseKeysExact(['H'], [Mode.Normal],  () => {
+    parseKeysExact(['H'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
     }),
 
-    parseKeysExact(['M'], [Mode.Normal],  () => {
+    parseKeysExact(['M'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortCenter', by: 'line' });
     }),
 
-    parseKeysExact(['L'], [Mode.Normal],  () => {
+    parseKeysExact(['L'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('cursorMove', { to: 'viewPortBottom', by: 'line' });
     }),
 
-    parseKeysExact(['z', 't'], [Mode.Normal],  (_vimState, editor) => {
+    parseKeysExact(['z', 't'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'top',
         });
     }),
 
-    parseKeysExact(['z', 'z'], [Mode.Normal],  (_vimState, editor) => {
+    parseKeysExact(['z', 'z'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'center',
         });
     }),
 
-    parseKeysExact(['z', 'b'], [Mode.Normal],  (_vimState, editor) => {
+    parseKeysExact(['z', 'b'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,
             at: 'bottom',
@@ -307,7 +307,7 @@ export const actions: Action[] = [
         vscode.commands.executeCommand('deleteAllRight');
     }),
 
-    parseKeysExact(['x'], [Mode.Normal],  () => {
+    parseKeysExact(['x'], [Mode.Normal],  (vimState, editor) => {
         vscode.commands.executeCommand('deleteRight');
     }),
 
@@ -360,7 +360,7 @@ export const actions: Action[] = [
     // }),
 ];
 
-function deleteLine(_vimState: VimState, editor: vscode.TextEditor): void {
+function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
     vscode.commands.executeCommand('editor.action.deleteLines').then(() => {
         editor.selections = editor.selections.map(selection => {
             const character = editor.document.lineAt(selection.active.line).firstNonWhitespaceCharacterIndex;

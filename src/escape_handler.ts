@@ -12,8 +12,6 @@ export function escapeHandler(vimState: VimState): void {
 
     if (!editor) return;
 
-    const document = editor.document;
-
     if (vimState.mode === Mode.Insert) {
         editor.selections = editor.selections.map(selection => {
             const newPosition = positionUtils.left(selection.active);

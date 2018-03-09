@@ -129,17 +129,3 @@ function getPartialTags(text: string): PartialTag[] {
 
     return tagRanges;
 }
-
-function popUntilTagName(stack: PartialTagOpening[], name: string): PartialTagOpening | undefined {
-    let partialTag = stack.pop();
-
-    while (partialTag) {
-        if (partialTag.name === name) {
-            return partialTag;
-        }
-
-        partialTag = stack.pop();
-    }
-
-    return undefined;
-}

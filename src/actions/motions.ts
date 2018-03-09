@@ -4,10 +4,7 @@ import { Mode } from '../modes_types';
 import { Action } from '../action_types';
 import {
     parseKeysExact,
-    parseKeysOperator,
-    createOperatorMotionExactKeys,
     parseKeysRegex,
-    createOperatorMotionRegex,
 } from '../parse_keys';
 import {
     vscodeToVimVisualSelection,
@@ -20,7 +17,6 @@ import { VimState } from '../vim_state_types';
 import { wordRanges, whitespaceWordRanges } from '../word_utils';
 import { searchForward, searchBackward } from '../search_utils';
 import { paragraphForward, paragraphBackward } from '../paragraph_utils';
-import { VimRange } from '../vim_range_types';
 import { setVisualLineSelections } from '../visual_line_utils';
 
 export const motions: Action[] = [
