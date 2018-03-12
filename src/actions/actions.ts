@@ -78,6 +78,8 @@ export const actions: Action[] = [
         const document = editor.document;
 
         if (vimState.mode === Mode.Normal) {
+            const originalSelections = editor.selections;
+
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
                     const register = vimState.registers[i];
@@ -107,7 +109,7 @@ export const actions: Action[] = [
                     if (register === undefined) return selection;
 
                     if (register.linewise) {
-                        const newPosition = new vscode.Position(selection.active.line + 1, 0);
+                        const newPosition = new vscode.Position(originalSelections[i].active.line + 1, 0);
                         return new vscode.Selection(newPosition, newPosition);
                     } else {
                         // Cursor ends up after the insertion so move it one to
