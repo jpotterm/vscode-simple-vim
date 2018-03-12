@@ -127,14 +127,39 @@ function delete_(editor: vscode.TextEditor, ranges: (VimRange | undefined)[]) {
             let vscodeRange = range.range;
 
             if (range.linewise) {
+                const start = range.range.start;
                 const end = range.range.end;
-                vscodeRange = new vscode.Range(
-                    range.range.start,
-                    new vscode.Position(end.line + 1, 0),
-                );
+
+                if (end.line === editor.document.lineCount - 1) {
+                    if (start.line === 0) {
+                        vscodeRange = new vscode.Range(start.with({ character: 0 }), end);
+                    } else {
+                        vscodeRange = new vscode.Range(
+                            new vscode.Position(start.line - 1, editor.document.lineAt(start.line - 1).text.length),
+                            end,
+                        );
+                    }
+                } else {
+                    vscodeRange = new vscode.Range(
+                        range.range.start,
+                        new vscode.Position(end.line + 1, 0),
+                    );
+                }
             }
 
             editBuilder.delete(vscodeRange);
+        });
+    }).then(() => {
+        // For linewise deletions, make sure cursor is at beginning of line
+        editor.selections = editor.selections.map((selection, i) => {
+            const range = ranges[i];
+
+            if (range && range.linewise) {
+                const newPosition = selection.start.with({ character: 0 });
+                return new vscode.Selection(newPosition, newPosition);
+            } else {
+                return selection;
+            }
         });
     });
 }
