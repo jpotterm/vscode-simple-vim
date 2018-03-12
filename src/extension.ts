@@ -15,6 +15,7 @@ const globalVimState: VimState = {
     registers: [],
     semicolonAction: () => undefined,
     commaAction: () => undefined,
+    lastPutRanges: [],
 };
 
 function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChangeEvent): void {

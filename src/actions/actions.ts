@@ -75,6 +75,37 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['p'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+        vimState.lastPutRanges = editor.selections.map((selection, i) => {
+            const register = vimState.registers[i];
+            if (!register) return undefined;
+
+            const registerLines = register.contents.split(/\r?\n/);
+
+            if (register.linewise) {
+                return {
+                    range: new vscode.Range(
+                        new vscode.Position(selection.start.line + 1, 0),
+                        new vscode.Position(
+                            selection.start.line + registerLines.length,
+                            registerLines[registerLines.length - 1].length,
+                        ),
+                    ),
+                    linewise: true,
+                };
+            } else {
+                return {
+                    range: new vscode.Range(
+                        selection.start,
+                        new vscode.Position(
+                            selection.start.line + registerLines.length,
+                            registerLines[registerLines.length - 1].length,
+                        ),
+                    ),
+                    linewise: false,
+                };
+            }
+        });
+
         const document = editor.document;
 
         if (vimState.mode === Mode.Normal) {
@@ -319,6 +350,22 @@ export const actions: Action[] = [
 
     parseKeysExact([','], [Mode.Normal],  (vimState, editor) => {
         vimState.commaAction(vimState, editor);
+    }),
+
+    parseKeysExact(['g', 'p'], [Mode.Normal],  (vimState, editor) => {
+        editor.selections = editor.selections.map((selection, i) => {
+            const putRange = vimState.lastPutRanges[i];
+
+            if (putRange) {
+                return new vscode.Selection(putRange.range.start, putRange.range.end);
+            } else {
+                return selection;
+            }
+        });
+
+        // enterVisualLineMode(vimState);
+        // setModeCursorStyle(vimState.mode, editor);
+        // setVisualLineSelections(editor);
     }),
 
     // Use the s operator instead of these

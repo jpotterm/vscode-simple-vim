@@ -34,7 +34,7 @@ export const motions: Action[] = [
 
     parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
         const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
-        vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'line', select: isVisual }).then(() => {
+        vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'wrappedLine', select: isVisual }).then(() => {
             if (outerVimState.mode === Mode.VisualLine) {
                 setVisualLineSelections(editor);
             }
@@ -43,7 +43,7 @@ export const motions: Action[] = [
 
     parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
         const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
-        vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'line', select: isVisual }).then(() => {
+        vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'wrappedLine', select: isVisual }).then(() => {
             if (outerVimState.mode === Mode.VisualLine) {
                 setVisualLineSelections(editor);
             }

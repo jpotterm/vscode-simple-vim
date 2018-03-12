@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { Mode } from './modes_types';
+import { VimRange } from './vim_range_types';
 
 type Regsiter = {
     contents: string;
@@ -14,4 +15,5 @@ export type VimState = {
     registers: (Regsiter | undefined)[];
     semicolonAction: (vimState: VimState, editor: vscode.TextEditor) => void;
     commaAction: (vimState: VimState, editor: vscode.TextEditor) => void;
+    lastPutRanges: (VimRange | undefined)[];
 };
