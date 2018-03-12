@@ -195,7 +195,6 @@ export const operatorMotions: OperatorMotion[] = [
 
     createOperatorMotionExactKeys(['i', '{'], createInnerBracketHandler('{', '}')),
     createOperatorMotionExactKeys(['a', '{'], createOuterBracketHandler('{', '}')),
-    createOperatorMotionExactKeys(['o', '{'], createLinewiseBracketHandler('{', '}')),
 
     createOperatorMotionExactKeys(['i', '['], createInnerBracketHandler('[', ']')),
     createOperatorMotionExactKeys(['a', '['], createOuterBracketHandler('[', ']')),
@@ -320,27 +319,6 @@ function createOuterBracketHandler(
                     bracketRange.end.with({ character: bracketRange.end.character + 1 }),
                 ),
                 linewise: false,
-            };
-        } else {
-            return undefined;
-        }
-    };
-}
-
-function createLinewiseBracketHandler(
-    openingChar: string,
-    closingChar: string,
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
-    return (vimState, document, position) => {
-        const bracketRange = getBracketRange(document, position, openingChar, closingChar);
-
-        if (bracketRange) {
-            return {
-                range: new vscode.Range(
-                    bracketRange.start.with({ character: 0 }),
-                    bracketRange.end.with({ character: document.lineAt(bracketRange.end.line).text.length }),
-                ),
-                linewise: true,
             };
         } else {
             return undefined;
