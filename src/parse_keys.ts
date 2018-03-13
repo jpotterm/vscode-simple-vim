@@ -10,7 +10,6 @@ import {
     ParseOperatorMotionSuccess,
 } from './parse_keys_types';
 import { Action } from './action_types';
-import { VimRange } from './vim_range_types';
 
 export function arrayStartsWith<T>(prefix: T[], xs: T[]) {
     if (xs.length < prefix.length) {
@@ -141,7 +140,8 @@ export function parseKeysOperator(
     operator: (
         vimState: VimState,
         editor: vscode.TextEditor,
-        ranges: (VimRange | undefined)[],
+        ranges: (vscode.Range | undefined)[],
+        linewise: boolean,
     ) => void,
 ): Action {
     return (vimState, keys, editor) => {
@@ -150,7 +150,8 @@ export function parseKeysOperator(
             return operatorResult.status;
         }
 
-        let ranges: (VimRange | undefined)[];
+        let ranges: (vscode.Range | undefined)[];
+        let linewise = true;
         if (vimState.mode === Mode.Normal) {
             if (operatorResult.rest.length === 0) {
                 return ParseKeysStatus.MORE_INPUT;
@@ -162,24 +163,24 @@ export function parseKeysOperator(
             }
 
             ranges = motionResult.ranges;
+            linewise = motionResult.linewise;
         } else if (vimState.mode === Mode.VisualLine) {
-            ranges = editor.selections.map(selection => {
-                return { range: selection, linewise: true };
-            });
+            ranges = editor.selections;
+            linewise = true;
         } else {
-            ranges = editor.selections.map(selection => {
-                return { range: selection, linewise: false };
-            });
+            ranges = editor.selections;
+            linewise = false;
         }
 
-        operator(vimState, editor, ranges);
+        operator(vimState, editor, ranges, linewise);
         return ParseKeysStatus.YES;
     };
 }
 
 export function createOperatorMotionExactKeys(
     matchKeys: string[],
-    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined,
+    linewise: boolean,
+    f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined,
 ): OperatorMotion {
     return (vimState, keys, editor) => {
         if (arrayEquals(keys, matchKeys)) {
@@ -189,6 +190,7 @@ export function createOperatorMotionExactKeys(
             return {
                 kind: 'success',
                 ranges: ranges,
+                linewise: linewise,
             };
         } else if (arrayStartsWith(keys, matchKeys)) {
             return {
@@ -207,12 +209,13 @@ export function createOperatorMotionExactKeys(
 export function createOperatorMotionRegex(
     doesPattern: RegExp,
     couldPattern: RegExp,
+    linewise: boolean,
     f: (
         vimState: VimState,
         document: vscode.TextDocument,
         position: vscode.Position,
         match: RegExpMatchArray,
-    ) => VimRange | undefined,
+    ) => vscode.Range | undefined,
 ): OperatorMotion {
     return (vimState, keys, editor) => {
         const keysStr = keys.join('');
@@ -225,6 +228,7 @@ export function createOperatorMotionRegex(
             return {
                 kind: 'success',
                 ranges: ranges,
+                linewise: linewise,
             };
         } else if (keysStr.match(couldPattern)) {
             return {

@@ -6,7 +6,6 @@ import { searchForward, searchBackward, searchBackwardBracket, searchForwardBrac
 import * as positionUtils from '../position_utils';
 import { wordRanges, whitespaceWordRanges } from '../word_utils';
 import { paragraphForward, paragraphBackward } from '../paragraph_utils';
-import { VimRange } from '../vim_range_types';
 import { VimState } from '../vim_state_types';
 import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { indentLevelRange } from '../indent_utils';
@@ -14,195 +13,159 @@ import { getTags } from '../tag_utils';
 import { arrayFindLast } from '../array_utils';
 
 export const operatorMotions: OperatorMotion[] = [
-    createOperatorMotionExactKeys(['l'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['l'], false, (vimState, document, position) => {
         const right = positionUtils.right(document, position);
 
         if (right.isEqual(position)) {
             return undefined;
         } else {
-            return { range: new vscode.Range(position, right), linewise: false };
+            return new vscode.Range(position, right);
         }
     }),
-    createOperatorMotionExactKeys(['h'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['h'], false, (vimState, document, position) => {
         const left = positionUtils.left(position);
 
         if (left.isEqual(position)) {
             return undefined;
         } else {
-            return { range: new vscode.Range(position, left), linewise: false };
+            return new vscode.Range(position, left);
         }
     }),
-    createOperatorMotionExactKeys(['k'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['k'], true, (vimState, document, position) => {
         if (position.line === 0) {
-            return {
-                range: new vscode.Range(
-                    new vscode.Position(0, 0),
-                    positionUtils.lineEnd(document, position),
-                ),
-                linewise: true,
-            };
+            return new vscode.Range(
+                new vscode.Position(0, 0),
+                positionUtils.lineEnd(document, position),
+            );
         } else {
-            return {
-                range: new vscode.Range(
-                    new vscode.Position(position.line - 1, 0),
-                    positionUtils.lineEnd(document, position),
-                ),
-                linewise: true,
-            };
+            return new vscode.Range(
+                new vscode.Position(position.line - 1, 0),
+                positionUtils.lineEnd(document, position),
+            );
         }
     }),
 
-    createOperatorMotionExactKeys(['j'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['j'], true, (vimState, document, position) => {
         if (position.line === document.lineCount - 1) {
-            return {
-                range: new vscode.Range(
-                    new vscode.Position(position.line, 0),
-                    positionUtils.lineEnd(document, position),
-                ),
-                linewise: true,
-            };
+            return new vscode.Range(
+                new vscode.Position(position.line, 0),
+                positionUtils.lineEnd(document, position),
+            );
         } else {
-            return {
-                range: new vscode.Range(
-                    new vscode.Position(position.line, 0),
-                    positionUtils.lineEnd(document, position.with({ line: position.line + 1 })),
-                ),
-                linewise: true,
-            };
+            return new vscode.Range(
+                new vscode.Position(position.line, 0),
+                positionUtils.lineEnd(document, position.with({ line: position.line + 1 })),
+            );
         }
     }),
 
-    createOperatorMotionExactKeys(['w'], createWordForwardHandler(wordRanges)),
-    createOperatorMotionExactKeys(['W'], createWordForwardHandler(whitespaceWordRanges)),
+    createOperatorMotionExactKeys(['w'], false, createWordForwardHandler(wordRanges)),
+    createOperatorMotionExactKeys(['W'], false, createWordForwardHandler(whitespaceWordRanges)),
 
-    createOperatorMotionExactKeys(['b'], createWordBackwardHandler(wordRanges)),
-    createOperatorMotionExactKeys(['B'], createWordBackwardHandler(whitespaceWordRanges)),
+    createOperatorMotionExactKeys(['b'], false, createWordBackwardHandler(wordRanges)),
+    createOperatorMotionExactKeys(['B'], false, createWordBackwardHandler(whitespaceWordRanges)),
 
-    createOperatorMotionExactKeys(['e'], createWordEndHandler(wordRanges)),
-    createOperatorMotionExactKeys(['E'], createWordEndHandler(whitespaceWordRanges)),
+    createOperatorMotionExactKeys(['e'], false, createWordEndHandler(wordRanges)),
+    createOperatorMotionExactKeys(['E'], false, createWordEndHandler(whitespaceWordRanges)),
 
-    createOperatorMotionRegex(/^f(..)$/, /^(f|f.)$/, (vimState, document, position, match) => {
+    createOperatorMotionRegex(/^f(..)$/, /^(f|f.)$/, false, (vimState, document, position, match) => {
         const fromPosition = position.with({ character: position.character + 1 });
         const result = searchForward(document, match[1], fromPosition);
 
         if (result) {
-            return {
-                range: new vscode.Range(position, result),
-                linewise: false,
-            };
+            return new vscode.Range(position, result);
         } else {
             return undefined;
         }
     }),
 
-    createOperatorMotionRegex(/^F(..)$/, /^(F|F.)$/, (vimState, document, position, match) => {
+    createOperatorMotionRegex(/^F(..)$/, /^(F|F.)$/, false, (vimState, document, position, match) => {
         const fromPosition = position.with({ character: position.character - 1 });
         const result = searchBackward(document, match[1], fromPosition);
 
         if (result) {
-            return {
-                range: new vscode.Range(position, result),
-                linewise: false,
-            };
+            return new vscode.Range(position, result);
         } else {
             return undefined;
         }
     }),
 
-    createOperatorMotionRegex(/^t(.)$/, /^t$/, (vimState, document, position, match) => {
+    createOperatorMotionRegex(/^t(.)$/, /^t$/, false, (vimState, document, position, match) => {
         const lineText = document.lineAt(position.line).text;
         const result = lineText.indexOf(match[1], position.character + 1);
 
         if (result >= 0) {
-            return {
-                range: new vscode.Range(position, position.with({ character: result })),
-                linewise: false,
-            };
+            return new vscode.Range(position, position.with({ character: result }));
         } else {
             return undefined;
         }
     }),
 
-    createOperatorMotionRegex(/^T(.)$/, /^T$/, (vimState, document, position, match) => {
+    createOperatorMotionRegex(/^T(.)$/, /^T$/, false, (vimState, document, position, match) => {
         const lineText = document.lineAt(position.line).text;
         const result = lineText.lastIndexOf(match[1], position.character - 1);
 
         if (result >= 0) {
             const newPosition = positionUtils.right(document, position.with({ character: result }));
-            return {
-                range: new vscode.Range(newPosition, position),
-                linewise: false,
-            };
+            return new vscode.Range(newPosition, position);
         } else {
             return undefined;
         }
     }),
 
-    createOperatorMotionExactKeys(['g', 'g'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['g', 'g'], true, (vimState, document, position) => {
         const lineLength = document.lineAt(position.line).text.length;
 
-        return {
-            range: new vscode.Range(
-                new vscode.Position(0, 0),
-                position.with({ character: lineLength }),
-            ),
-            linewise: true,
-        };
+        return new vscode.Range(
+            new vscode.Position(0, 0),
+            position.with({ character: lineLength }),
+        );
     }),
 
-    createOperatorMotionExactKeys(['G'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['G'], true, (vimState, document, position) => {
         const lineLength = document.lineAt(document.lineCount - 1).text.length;
 
-        return {
-            range: new vscode.Range(
-                position.with({ character: 0 }),
-                new vscode.Position(document.lineCount - 1, lineLength),
-            ),
-            linewise: true,
-        };
+        return new vscode.Range(
+            position.with({ character: 0 }),
+            new vscode.Position(document.lineCount - 1, lineLength),
+        );
     }),
 
     // TODO: return undefined?
-    createOperatorMotionExactKeys(['}'], (vimState, document, position) => {
-        return {
-            range: new vscode.Range(
-                position.with({ character: 0 }),
-                new vscode.Position(paragraphForward(document, position.line), 0),
-            ),
-            linewise: true,
-        };
+    createOperatorMotionExactKeys(['}'], true, (vimState, document, position) => {
+        return new vscode.Range(
+            position.with({ character: 0 }),
+            new vscode.Position(paragraphForward(document, position.line), 0),
+        );
     }),
 
     // TODO: return undefined?
-    createOperatorMotionExactKeys(['{'], (vimState, document, position) => {
-        return {
-            range: new vscode.Range(
-                new vscode.Position(paragraphBackward(document, position.line), 0),
-                position.with({ character: 0 }),
-            ),
-            linewise: true,
-        };
+    createOperatorMotionExactKeys(['{'], true, (vimState, document, position) => {
+        return new vscode.Range(
+            new vscode.Position(paragraphBackward(document, position.line), 0),
+            position.with({ character: 0 }),
+        );
     }),
 
-    createOperatorMotionExactKeys(['i', "'"], createInnerQuoteHandler("'")),
-    createOperatorMotionExactKeys(['a', "'"], createOuterQuoteHandler("'")),
+    createOperatorMotionExactKeys(['i', "'"], false, createInnerQuoteHandler("'")),
+    createOperatorMotionExactKeys(['a', "'"], false, createOuterQuoteHandler("'")),
 
-    createOperatorMotionExactKeys(['i', '"'], createInnerQuoteHandler('"')),
-    createOperatorMotionExactKeys(['a', '"'], createOuterQuoteHandler('"')),
+    createOperatorMotionExactKeys(['i', '"'], false, createInnerQuoteHandler('"')),
+    createOperatorMotionExactKeys(['a', '"'], false, createOuterQuoteHandler('"')),
 
-    createOperatorMotionExactKeys(['i', '('], createInnerBracketHandler('(', ')')),
-    createOperatorMotionExactKeys(['a', '('], createOuterBracketHandler('(', ')')),
+    createOperatorMotionExactKeys(['i', '('], false, createInnerBracketHandler('(', ')')),
+    createOperatorMotionExactKeys(['a', '('], false, createOuterBracketHandler('(', ')')),
 
-    createOperatorMotionExactKeys(['i', '{'], createInnerBracketHandler('{', '}')),
-    createOperatorMotionExactKeys(['a', '{'], createOuterBracketHandler('{', '}')),
+    createOperatorMotionExactKeys(['i', '{'], false, createInnerBracketHandler('{', '}')),
+    createOperatorMotionExactKeys(['a', '{'], false, createOuterBracketHandler('{', '}')),
 
-    createOperatorMotionExactKeys(['i', '['], createInnerBracketHandler('[', ']')),
-    createOperatorMotionExactKeys(['a', '['], createOuterBracketHandler('[', ']')),
+    createOperatorMotionExactKeys(['i', '['], false, createInnerBracketHandler('[', ']')),
+    createOperatorMotionExactKeys(['a', '['], false, createOuterBracketHandler('[', ']')),
 
-    createOperatorMotionExactKeys(['i', '<'], createInnerBracketHandler('<', '>')),
-    createOperatorMotionExactKeys(['a', '<'], createOuterBracketHandler('<', '>')),
+    createOperatorMotionExactKeys(['i', '<'], false, createInnerBracketHandler('<', '>')),
+    createOperatorMotionExactKeys(['a', '<'], false, createOuterBracketHandler('<', '>')),
 
-    createOperatorMotionExactKeys(['i', 't'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['i', 't'], false, (vimState, document, position) => {
         const tags = getTags(document);
 
         const closestTag = arrayFindLast(tags, tag => {
@@ -219,13 +182,10 @@ export const operatorMotions: OperatorMotion[] = [
 
         if (closestTag) {
             if (closestTag.closing) {
-                return {
-                    range: new vscode.Range(
-                        closestTag.opening.end.with({ character: closestTag.opening.end.character + 1 }),
-                        closestTag.closing.start,
-                    ),
-                    linewise: false,
-                };
+                return new vscode.Range(
+                    closestTag.opening.end.with({ character: closestTag.opening.end.character + 1 }),
+                    closestTag.closing.start,
+                );
             } else {
                 throw new Error('We should have already filtered out self-closing tags above');
             }
@@ -234,7 +194,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['a', 't'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['a', 't'], false, (vimState, document, position) => {
         const tags = getTags(document);
 
         const closestTag = arrayFindLast(tags, tag => {
@@ -249,21 +209,15 @@ export const operatorMotions: OperatorMotion[] = [
 
         if (closestTag) {
             if (closestTag.closing) {
-                return {
-                    range: new vscode.Range(
-                        closestTag.opening.start,
-                        closestTag.closing.end.with({ character: closestTag.closing.end.character + 1 }),
-                    ),
-                    linewise: false,
-                };
+                return new vscode.Range(
+                    closestTag.opening.start,
+                    closestTag.closing.end.with({ character: closestTag.closing.end.character + 1 }),
+                );
             } else {
-                return {
-                    range: new vscode.Range(
-                        closestTag.opening.start,
-                        closestTag.opening.end.with({ character: closestTag.opening.end.character + 1 }),
-                    ),
-                    linewise: false,
-                };
+                return new vscode.Range(
+                    closestTag.opening.start,
+                    closestTag.opening.end.with({ character: closestTag.opening.end.character + 1 }),
+                );
             }
         } else {
             return undefined;
@@ -271,34 +225,28 @@ export const operatorMotions: OperatorMotion[] = [
     }),
 
     // TODO: return undefined?
-    createOperatorMotionExactKeys(['i', 'i'], (vimState, document, position) => {
+    createOperatorMotionExactKeys(['i', 'i'], true, (vimState, document, position) => {
         const simpleRange = indentLevelRange(document, position.line);
 
-        return {
-            range: new vscode.Range(
-                new vscode.Position(simpleRange.start, 0),
-                new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
-            ),
-            linewise: true,
-        };
+        return new vscode.Range(
+            new vscode.Position(simpleRange.start, 0),
+            new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
+        );
     }),
 ];
 
 function createInnerBracketHandler(
     openingChar: string,
     closingChar: string,
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
     return (vimState, document, position) => {
         const bracketRange = getBracketRange(document, position, openingChar, closingChar);
 
         if (bracketRange) {
-            return {
-                range: new vscode.Range(
-                    bracketRange.start.with({ character: bracketRange.start.character + 1 }),
-                    bracketRange.end,
-                ),
-                linewise: false,
-            };
+            return new vscode.Range(
+                bracketRange.start.with({ character: bracketRange.start.character + 1 }),
+                bracketRange.end,
+            );
         } else {
             return undefined;
         }
@@ -308,18 +256,15 @@ function createInnerBracketHandler(
 function createOuterBracketHandler(
     openingChar: string,
     closingChar: string,
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
     return (vimState, document, position) => {
         const bracketRange = getBracketRange(document, position, openingChar, closingChar);
 
         if (bracketRange) {
-            return {
-                range: new vscode.Range(
-                    bracketRange.start,
-                    bracketRange.end.with({ character: bracketRange.end.character + 1 }),
-                ),
-                linewise: false,
-            };
+            return new vscode.Range(
+                bracketRange.start,
+                bracketRange.end.with({ character: bracketRange.end.character + 1 }),
+            );
         } else {
             return undefined;
         }
@@ -367,20 +312,17 @@ function getBracketRange(
 
 function createInnerQuoteHandler(
     quoteChar: string,
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
     return (vimState, document, position) => {
         const lineText = document.lineAt(position.line).text;
         const ranges = quoteRanges(quoteChar, lineText);
         const result = findQuoteRange(ranges, position);
 
         if (result) {
-            return {
-                range: new vscode.Range(
-                    position.with({ character: result.start + 1 }),
-                    position.with({ character: result.end }),
-                ),
-                linewise: false,
-            };
+            return new vscode.Range(
+                position.with({ character: result.start + 1 }),
+                position.with({ character: result.end }),
+            );
         } else {
             return undefined;
         }
@@ -389,20 +331,17 @@ function createInnerQuoteHandler(
 
 function createOuterQuoteHandler(
     quoteChar: string,
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
     return (vimState, document, position) => {
         const lineText = document.lineAt(position.line).text;
         const ranges = quoteRanges(quoteChar, lineText);
         const result = findQuoteRange(ranges, position);
 
         if (result) {
-            return {
-                range: new vscode.Range(
-                    position.with({ character: result.start }),
-                    position.with({ character: result.end + 1 }),
-                ),
-                linewise: false,
-            };
+            return new vscode.Range(
+                position.with({ character: result.start }),
+                position.with({ character: result.end + 1 }),
+            );
         } else {
             return undefined;
         }
@@ -411,7 +350,7 @@ function createOuterQuoteHandler(
 
 function createWordForwardHandler(
     wordRangesFunction: (text: string) => { start: number; end: number }[],
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range {
     return (vimState, document, position) => {
         const lineText = document.lineAt(position.line).text;
         const ranges = wordRangesFunction(lineText);
@@ -419,22 +358,16 @@ function createWordForwardHandler(
         const result = ranges.find(x => x.start > position.character);
 
         if (result) {
-            return {
-                range: new vscode.Range(position, position.with({ character: result.start })),
-                linewise: false,
-            };
+            return new vscode.Range(position, position.with({ character: result.start }));
         } else {
-            return {
-                range: new vscode.Range(position, position.with({ character: lineText.length })),
-                linewise: false,
-            };
+            return new vscode.Range(position, position.with({ character: lineText.length }));
         }
     };
 }
 
 function createWordBackwardHandler(
     wordRangesFunction: (text: string) => { start: number; end: number }[],
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
     return (vimState, document, position) => {
         const lineText = document.lineAt(position.line).text;
         const ranges = wordRangesFunction(lineText);
@@ -442,10 +375,7 @@ function createWordBackwardHandler(
         const result = ranges.reverse().find(x => x.start < position.character);
 
         if (result) {
-            return {
-                range: new vscode.Range(position.with({ character: result.start }), position),
-                linewise: false,
-            };
+            return new vscode.Range(position.with({ character: result.start }), position);
         } else {
             return undefined;
         }
@@ -454,7 +384,7 @@ function createWordBackwardHandler(
 
 function createWordEndHandler(
     wordRangesFunction: (text: string) => { start: number; end: number }[],
-): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => VimRange | undefined {
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
     return (vimState, document, position) => {
         const lineText = document.lineAt(position.line).text;
         const ranges = wordRangesFunction(lineText);
@@ -462,13 +392,10 @@ function createWordEndHandler(
         const result = ranges.find(x => x.end > position.character);
 
         if (result) {
-            return {
-                range: new vscode.Range(
-                    position,
-                    positionUtils.right(document, position.with({ character: result.end })),
-                ),
-                linewise: false,
-            };
+            return new vscode.Range(
+                position,
+                positionUtils.right(document, position.with({ character: result.end })),
+            );
         } else {
             return undefined;
         }

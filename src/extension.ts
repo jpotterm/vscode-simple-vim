@@ -12,10 +12,16 @@ const globalVimState: VimState = {
     typeSubscription: undefined,
     mode: Mode.Insert,
     keysPressed: [],
-    registers: [],
+    registers: {
+        contentsList: [],
+        linewise: true,
+    },
     semicolonAction: () => undefined,
     commaAction: () => undefined,
-    lastPutRanges: [],
+    lastPutRanges: {
+        ranges: [],
+        linewise: true,
+    },
 };
 
 function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChangeEvent): void {

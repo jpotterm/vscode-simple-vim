@@ -75,36 +75,33 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['p'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
-        vimState.lastPutRanges = editor.selections.map((selection, i) => {
-            const register = vimState.registers[i];
-            if (!register) return undefined;
+        vimState.lastPutRanges = {
+            ranges: editor.selections.map((selection, i) => {
+                const registerContents = vimState.registers.contentsList[i];
+                if (!registerContents) return undefined;
 
-            const registerLines = register.contents.split(/\r?\n/);
+                const registerLines = registerContents.split(/\r?\n/);
 
-            if (register.linewise) {
-                return {
-                    range: new vscode.Range(
+                if (vimState.registers.linewise) {
+                    return new vscode.Range(
                         new vscode.Position(selection.start.line + 1, 0),
                         new vscode.Position(
                             selection.start.line + registerLines.length,
                             registerLines[registerLines.length - 1].length,
                         ),
-                    ),
-                    linewise: true,
-                };
-            } else {
-                return {
-                    range: new vscode.Range(
+                    );
+                } else {
+                    return new vscode.Range(
                         selection.start,
                         new vscode.Position(
                             selection.start.line + registerLines.length,
                             registerLines[registerLines.length - 1].length,
                         ),
-                    ),
-                    linewise: false,
-                };
-            }
-        });
+                    );
+                }
+            }),
+            linewise: vimState.registers.linewise,
+        };
 
         const document = editor.document;
 
@@ -113,13 +110,13 @@ export const actions: Action[] = [
 
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
-                    const register = vimState.registers[i];
-                    if (register === undefined) return;
+                    const registerContents = vimState.registers.contentsList[i];
+                    if (registerContents === undefined) return;
 
-                    if (register.linewise) {
+                    if (vimState.registers.linewise) {
                         const lineLength = document.lineAt(selection.active.line).text.length;
                         const insertPosition = new vscode.Position(selection.active.line, lineLength);
-                        editBuilder.insert(insertPosition, '\n' + register.contents);
+                        editBuilder.insert(insertPosition, '\n' + registerContents);
                     } else {
                         const insertPosition = positionUtils.right(document, selection.active);
 
@@ -131,15 +128,15 @@ export const actions: Action[] = [
                         );
 
                         // Insert text
-                        editBuilder.insert(insertPosition, register.contents);
+                        editBuilder.insert(insertPosition, registerContents);
                     }
                 });
             }).then(() => {
                 editor.selections = editor.selections.map((selection, i) => {
-                    const register = vimState.registers[i];
-                    if (register === undefined) return selection;
+                    const registerContents = vimState.registers.contentsList[i];
+                    if (registerContents === undefined) return selection;
 
-                    if (register.linewise) {
+                    if (vimState.registers.linewise) {
                         const newPosition = new vscode.Position(originalSelections[i].active.line + 1, 0);
                         return new vscode.Selection(newPosition, newPosition);
                     } else {
@@ -153,10 +150,10 @@ export const actions: Action[] = [
         } else if (vimState.mode === Mode.Visual) {
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
-                    const register = vimState.registers[i];
-                    if (register === undefined) return;
+                    const registerContents = vimState.registers.contentsList[i];
+                    if (registerContents === undefined) return;
 
-                    const contents = register.linewise ? '\n' + register.contents + '\n' : register.contents;
+                    const contents = vimState.registers.linewise ? '\n' + registerContents + '\n' : registerContents;
 
                     editBuilder.delete(selection);
                     editBuilder.insert(selection.start, contents);
@@ -173,10 +170,10 @@ export const actions: Action[] = [
         } else {
             editor.edit(editBuilder => {
                 editor.selections.forEach((selection, i) => {
-                    const register = vimState.registers[i];
-                    if (register === undefined) return;
+                    const registerContents = vimState.registers.contentsList[i];
+                    if (registerContents === undefined) return;
 
-                    editBuilder.replace(selection, register.contents);
+                    editBuilder.replace(selection, registerContents);
                 });
             }).then(() => {
                 editor.selections = editor.selections.map(selection => {
@@ -192,22 +189,22 @@ export const actions: Action[] = [
     parseKeysExact(['P'], [Mode.Normal],  (vimState, editor) => {
         editor.edit(editBuilder => {
             editor.selections.forEach((selection, i) => {
-                const register = vimState.registers[i];
-                if (register === undefined) return;
+                const registerContents = vimState.registers.contentsList[i];
+                if (registerContents === undefined) return;
 
-                if (register.linewise) {
+                if (vimState.registers.linewise) {
                     const insertPosition = new vscode.Position(selection.active.line, 0);
-                    editBuilder.insert(insertPosition, register.contents + '\n');
+                    editBuilder.insert(insertPosition, registerContents + '\n');
                 } else {
-                    editBuilder.insert(selection.active, register.contents);
+                    editBuilder.insert(selection.active, registerContents);
                 }
             });
         }).then(() => {
             editor.selections = editor.selections.map((selection, i) => {
-                const register = vimState.registers[i];
-                if (register === undefined) return selection;
+                const registerContents = vimState.registers.contentsList[i];
+                if (registerContents === undefined) return selection;
 
-                if (register.linewise) {
+                if (vimState.registers.linewise) {
                     const newPosition = new vscode.Position(selection.active.line, 0);
                     return new vscode.Selection(newPosition, newPosition);
                 } else {
@@ -354,10 +351,10 @@ export const actions: Action[] = [
 
     parseKeysExact(['g', 'p'], [Mode.Normal],  (vimState, editor) => {
         editor.selections = editor.selections.map((selection, i) => {
-            const putRange = vimState.lastPutRanges[i];
+            const putRange = vimState.lastPutRanges.ranges[i];
 
             if (putRange) {
-                return new vscode.Selection(putRange.range.start, putRange.range.end);
+                return new vscode.Selection(putRange.start, putRange.end);
             } else {
                 return selection;
             }
@@ -420,19 +417,19 @@ function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
 }
 
 function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
-    vimState.registers = editor.selections.map(selection => {
-        return {
-            contents: editor.document.lineAt(selection.active.line).text,
-            linewise: true,
-        };
-    });
+    vimState.registers = {
+        contentsList: editor.selections.map(selection => {
+            return editor.document.lineAt(selection.active.line).text;
+        }),
+        linewise: true,
+    };
 }
 
 function yankToEndOfLine(vimState: VimState, editor: vscode.TextEditor): void {
-    vimState.registers = editor.selections.map(selection => {
-        return {
-            contents: editor.document.lineAt(selection.active.line).text.substring(selection.active.character),
-            linewise: false,
-        };
-    });
+    vimState.registers = {
+        contentsList: editor.selections.map(selection => {
+            return editor.document.lineAt(selection.active.line).text.substring(selection.active.character);
+        }),
+        linewise: false,
+    };
 }
