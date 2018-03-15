@@ -75,33 +75,58 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['p'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
-        vimState.lastPutRanges = {
-            ranges: editor.selections.map((selection, i) => {
-                const registerContents = vimState.registers.contentsList[i];
-                if (!registerContents) return undefined;
+        // Last put ranges
+        if (vimState.mode === Mode.Normal) {
+            vimState.lastPutRanges = {
+                ranges: editor.selections.map((selection, i) => {
+                    const registerContents = vimState.registers.contentsList[i];
+                    if (!registerContents) return undefined;
 
-                const registerLines = registerContents.split(/\r?\n/);
+                    const registerLines = registerContents.split(/\r?\n/);
+                    const lastLineLength = registerLines[registerLines.length - 1].length;
 
-                if (vimState.registers.linewise) {
-                    return new vscode.Range(
-                        new vscode.Position(selection.start.line + 1, 0),
-                        new vscode.Position(
-                            selection.start.line + registerLines.length,
-                            registerLines[registerLines.length - 1].length,
-                        ),
-                    );
-                } else {
+                    if (vimState.registers.linewise) {
+                        return new vscode.Range(
+                            new vscode.Position(selection.start.line + 1, 0),
+                            new vscode.Position(selection.start.line + registerLines.length, lastLineLength),
+                        );
+                    } else {
+                        const endCharacter = registerLines.length === 1 ?
+                            selection.start.character + 1 + lastLineLength :
+                            lastLineLength;
+
+                        return new vscode.Range(
+                            selection.start.with({ character: selection.start.character + 1 }),
+                            new vscode.Position(selection.start.line + (registerLines.length - 1), endCharacter),
+                        );
+                    }
+                }),
+                linewise: vimState.registers.linewise,
+            };
+        } else {
+            vimState.lastPutRanges = {
+                ranges: editor.selections.map((selection, i) => {
+                    const registerContents = vimState.registers.contentsList[i];
+                    if (!registerContents) return undefined;
+
+                    const registerLines = registerContents.split(/\r?\n/);
+
+                    const lastLineLength = registerLines[registerLines.length - 1].length;
+                    const endCharacter = registerLines.length === 1 ?
+                        selection.start.character + lastLineLength :
+                        lastLineLength;
+
                     return new vscode.Range(
                         selection.start,
                         new vscode.Position(
-                            selection.start.line + registerLines.length,
-                            registerLines[registerLines.length - 1].length,
+                            selection.start.line + (registerLines.length - 1),
+                            endCharacter,
                         ),
                     );
-                }
-            }),
-            linewise: vimState.registers.linewise,
-        };
+                }),
+                linewise: vimState.registers.linewise,
+            };
+        }
 
         const document = editor.document;
 
@@ -187,6 +212,34 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['P'], [Mode.Normal],  (vimState, editor) => {
+        // Last put ranges
+        vimState.lastPutRanges = {
+            ranges: editor.selections.map((selection, i) => {
+                const registerContents = vimState.registers.contentsList[i];
+                if (!registerContents) return undefined;
+
+                const registerLines = registerContents.split(/\r?\n/);
+                const lastLineLength = registerLines[registerLines.length - 1].length;
+
+                if (vimState.registers.linewise) {
+                    return new vscode.Range(
+                        new vscode.Position(selection.start.line, 0),
+                        new vscode.Position(selection.start.line + (registerLines.length - 1), lastLineLength),
+                    );
+                } else {
+                    const endCharacter = registerLines.length === 1 ?
+                        selection.start.character + lastLineLength :
+                        lastLineLength;
+
+                    return new vscode.Range(
+                        selection.start.with({ character: selection.start.character }),
+                        new vscode.Position(selection.start.line + (registerLines.length - 1), endCharacter),
+                    );
+                }
+            }),
+            linewise: vimState.registers.linewise,
+        };
+
         editor.edit(editBuilder => {
             editor.selections.forEach((selection, i) => {
                 const registerContents = vimState.registers.contentsList[i];
@@ -360,50 +413,14 @@ export const actions: Action[] = [
             }
         });
 
-        // enterVisualLineMode(vimState);
-        // setModeCursorStyle(vimState.mode, editor);
-        // setVisualLineSelections(editor);
+        if (vimState.lastPutRanges.linewise) {
+            enterVisualLineMode(vimState);
+            setModeCursorStyle(vimState.mode, editor);
+        } else {
+            enterVisualMode(vimState);
+            setModeCursorStyle(vimState.mode, editor);
+        }
     }),
-
-    // Use the s operator instead of these
-
-    // parseKeysExact(['i', 'i'], [Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
-    //     const document = editor.document;
-
-    //     editor.selections = editor.selections.map(selection => {
-    //         const simpleRange = indentLevelRange(document, selection.active.line);
-
-    //         return new vscode.Selection(
-    //             new vscode.Position(simpleRange.start, 0),
-    //             new vscode.Position(simpleRange.end, document.lineAt(simpleRange.end).text.length),
-    //         );
-    //     });
-
-    //     if (vimState.mode === Mode.Visual) {
-    //         enterVisualLineMode(vimState);
-    //         setModeCursorStyle(vimState.mode, editor);
-    //     }
-    // }),
-
-    // parseKeysExact(['i', "'"], [Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
-    //     const document = editor.document;
-
-    //     editor.selections = editor.selections.map(selection => {
-    //         const position = selection.isReversed ? selection.active : positionUtils.left(selection.active);
-    //         const lineText = document.lineAt(position.line).text;
-    //         const ranges = quoteRanges("'", lineText);
-    //         const result = findQuoteRange(ranges, position);
-
-    //         if (result) {
-    //             return new vscode.Selection(
-    //                 position.with({ character: result.start + 1 }),
-    //                 position.with({ character: result.end }),
-    //             );
-    //         } else {
-    //             return selection;
-    //         }
-    //     });
-    // }),
 ];
 
 function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
