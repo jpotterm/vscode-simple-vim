@@ -68,6 +68,12 @@ export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['e'], false, createWordEndHandler(wordRanges)),
     createOperatorMotionExactKeys(['E'], false, createWordEndHandler(whitespaceWordRanges)),
 
+    createOperatorMotionExactKeys(['i', 'w'], false, createInnerWordHandler(wordRanges)),
+    createOperatorMotionExactKeys(['i', 'W'], false, createInnerWordHandler(whitespaceWordRanges)),
+
+    createOperatorMotionExactKeys(['a', 'w'], false, createOuterWordHandler(wordRanges)),
+    createOperatorMotionExactKeys(['a', 'W'], false, createOuterWordHandler(whitespaceWordRanges)),
+
     createOperatorMotionRegex(/^f(..)$/, /^(f|f.)$/, false, (vimState, document, position, match) => {
         const fromPosition = position.with({ character: position.character + 1 });
         const result = searchForward(document, match[1], fromPosition);
@@ -399,5 +405,59 @@ function createWordEndHandler(
         } else {
             return undefined;
         }
+    };
+}
+
+function createInnerWordHandler(
+    wordRangesFunction: (text: string) => { start: number; end: number }[],
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
+    return (vimState, document, position) => {
+        const lineText = document.lineAt(position.line).text;
+        const ranges = wordRangesFunction(lineText);
+
+        const result = ranges.find(x => x.start <= position.character && position.character <= x.end);
+
+        if (result) {
+            return new vscode.Range(
+                position.with({ character: result.start }),
+                positionUtils.right(document, position.with({ character: result.end })),
+            );
+        } else {
+            return undefined;
+        }
+    };
+}
+
+function createOuterWordHandler(
+    wordRangesFunction: (text: string) => { start: number; end: number }[],
+): (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined {
+    return (vimState, document, position) => {
+        const lineText = document.lineAt(position.line).text;
+        const ranges = wordRangesFunction(lineText);
+
+        for (let i = 0; i < ranges.length; ++i) {
+            const range = ranges[i];
+
+            if (range.start <= position.character && position.character <= range.end) {
+                if (i < ranges.length - 1) {
+                    return new vscode.Range(
+                        position.with({ character: range.start }),
+                        position.with({ character: ranges[i + 1].start }),
+                    );
+                } else if (i > 0) {
+                    return new vscode.Range(
+                        positionUtils.right(document, position.with({ character: ranges[i - 1].end })),
+                        positionUtils.right(document, position.with({ character: range.end })),
+                    );
+                } else {
+                    return new vscode.Range(
+                        position.with({ character: range.start }),
+                        positionUtils.right(document, position.with({ character: range.end })),
+                    );
+                }
+            }
+        }
+
+        return undefined;
     };
 }
