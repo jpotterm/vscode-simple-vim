@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 export function flashYankHighlight(editor: vscode.TextEditor, ranges: vscode.Range[]) {
     const decoration = vscode.window.createTextEditorDecorationType({
-        backgroundColor: '#F8F3AB',
+        backgroundColor: vscode.workspace.getConfiguration('simpleVim').get('yankHighlightBackgroundColor'),
     });
 
     editor.setDecorations(decoration, ranges);

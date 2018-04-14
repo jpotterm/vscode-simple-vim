@@ -46,7 +46,20 @@
                 "command": "extension.simpleVim.scrollUpPage",
                 "when": "editorTextFocus && !extension.simpleVim.insertMode"
             }
-        ]
+        ],
+        "contributes": {
+            "configuration": {
+                "type": "object",
+                "title": "SimpleVim configuration",
+                "properties": {
+                    "simpleVim.yankHighlightBackgroundColor": {
+                        "type": "color",
+                        "default": "#F8F3AB",
+                        "description": "Background color that flashes to show the range when yanking."
+                    }
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
