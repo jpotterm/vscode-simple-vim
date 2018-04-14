@@ -4,6 +4,10 @@
     "description": "Vim",
     "version": "0.0.1",
     "publisher": "jpotterm",
+    "repository" : {
+        "type" : "git",
+        "url" : "https://github.com/jpotterm/vscode-simple-vim.git"
+    },
     "engines": {
         "vscode": "^1.22.2"
     },
