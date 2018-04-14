@@ -5,7 +5,7 @@
     "version": "0.0.1",
     "publisher": "jpotterm",
     "engines": {
-        "vscode": "^1.19.0"
+        "vscode": "^1.22.2"
     },
     "categories": [
         "Other"
@@ -52,7 +52,7 @@
             "title": "SimpleVim Configuration",
             "properties": {
                 "simpleVim.yankHighlightBackgroundColor": {
-                    "type": "color",
+                    "type": "string",
                     "default": "#F8F3AB",
                     "description": "Background color that flashes to show the range when yanking."
                 }
@@ -67,11 +67,10 @@
         "lint": "tslint -c tslint.json 'src/**/*.ts' --exclude 'src/test/*.ts'"
     },
     "devDependencies": {
-        "@types/mocha": "^2.2.48",
         "@types/node": "^7.0.52",
         "tslint": "^5.9.1",
         "tslint-no-circular-imports": "^0.2.1",
-        "typescript": "^2.7.2",
-        "vscode": "^1.1.10"
+        "typescript": "^2.8.1",
+        "vscode": "^1.1.14"
     }
 }
