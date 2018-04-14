@@ -5,7 +5,7 @@ import { OperatorMotion } from '../parse_keys_types';
 import { searchForward, searchBackward, searchBackwardBracket, searchForwardBracket } from '../search_utils';
 import * as positionUtils from '../position_utils';
 import { wordRanges, whitespaceWordRanges } from '../word_utils';
-import { paragraphForward, paragraphBackward } from '../paragraph_utils';
+import { paragraphForward, paragraphBackward, paragraphRangeOuter, paragraphRangeInner } from '../paragraph_utils';
 import { VimState } from '../vim_state_types';
 import { quoteRanges, findQuoteRange } from '../quote_utils';
 import { indentLevelRange } from '../indent_utils';
@@ -151,6 +151,32 @@ export const operatorMotions: OperatorMotion[] = [
             new vscode.Position(paragraphBackward(document, position.line), 0),
             position.with({ character: 0 }),
         );
+    }),
+
+    createOperatorMotionExactKeys(['i', 'p'], true, (vimState, document, position) => {
+        const result = paragraphRangeInner(document, position.line);
+
+        if (result) {
+            return new vscode.Range(
+                new vscode.Position(result.start, 0),
+                new vscode.Position(result.end, document.lineAt(result.end).text.length),
+            );
+        } else {
+            return undefined;
+        }
+    }),
+
+    createOperatorMotionExactKeys(['a', 'p'], true, (vimState, document, position) => {
+        const result = paragraphRangeOuter(document, position.line);
+
+        if (result) {
+            return new vscode.Range(
+                new vscode.Position(result.start, 0),
+                new vscode.Position(result.end, document.lineAt(result.end).text.length),
+            );
+        } else {
+            return undefined;
+        }
     }),
 
     createOperatorMotionExactKeys(['i', "'"], false, createInnerQuoteHandler("'")),
