@@ -185,6 +185,9 @@ export const operatorMotions: OperatorMotion[] = [
     createOperatorMotionExactKeys(['i', '"'], false, createInnerQuoteHandler('"')),
     createOperatorMotionExactKeys(['a', '"'], false, createOuterQuoteHandler('"')),
 
+    createOperatorMotionExactKeys(['i', '`'], false, createInnerQuoteHandler('`')),
+    createOperatorMotionExactKeys(['a', '`'], false, createOuterQuoteHandler('`')),
+
     createOperatorMotionExactKeys(['i', '('], false, createInnerBracketHandler('(', ')')),
     createOperatorMotionExactKeys(['a', '('], false, createOuterBracketHandler('(', ')')),
 
