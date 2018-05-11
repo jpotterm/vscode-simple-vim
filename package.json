@@ -3,10 +3,11 @@
     "displayName": "Simple Vim",
     "description": "Vim extension for VSCode",
     "version": "0.0.2",
+    "license": "MIT",
     "publisher": "jpotterm",
-    "repository" : {
-        "type" : "git",
-        "url" : "https://github.com/jpotterm/vscode-simple-vim.git"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jpotterm/vscode-simple-vim.git"
     },
     "engines": {
         "vscode": "^1.22.2"
@@ -71,10 +72,10 @@
         "lint": "tslint -c tslint.json 'src/**/*.ts' --exclude 'src/test/*.ts'"
     },
     "devDependencies": {
-        "@types/node": "^7.0.52",
-        "tslint": "^5.9.1",
-        "tslint-no-circular-imports": "^0.2.1",
-        "typescript": "^2.8.1",
-        "vscode": "^1.1.14"
+        "@types/node": "^10.0.8",
+        "tslint": "^5.10.0",
+        "tslint-no-circular-imports": "^0.3.0",
+        "typescript": "^2.8.3",
+        "vscode": "^1.1.17"
     }
 }
