@@ -20,19 +20,19 @@ import { paragraphForward, paragraphBackward } from '../paragraph_utils';
 import { setVisualLineSelections } from '../visual_line_utils';
 
 export const motions: Action[] = [
-    parseKeysExact(['l'], [Mode.Normal, Mode.Visual],  (vimState, editor) => {
+    parseKeysExact(['l'], [Mode.Normal, Mode.Visual], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return positionUtils.rightNormal(document, position);
         });
     }),
 
-    parseKeysExact(['h'], [Mode.Normal, Mode.Visual],  (vimState, editor) => {
+    parseKeysExact(['h'], [Mode.Normal, Mode.Visual], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return positionUtils.left(position);
         });
     }),
 
-    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
+    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (outerVimState, editor) => {
         const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
         vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'wrappedLine', select: isVisual }).then(() => {
             if (outerVimState.mode === Mode.VisualLine) {
@@ -41,7 +41,7 @@ export const motions: Action[] = [
         });
     }),
 
-    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (outerVimState, editor) => {
+    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (outerVimState, editor) => {
         const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
         vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'wrappedLine', select: isVisual }).then(() => {
             if (outerVimState.mode === Mode.VisualLine) {
@@ -59,7 +59,7 @@ export const motions: Action[] = [
     parseKeysExact(['e'], [Mode.Normal, Mode.Visual], createWordEndHandler(wordRanges)),
     parseKeysExact(['E'], [Mode.Normal, Mode.Visual], createWordEndHandler(whitespaceWordRanges)),
 
-    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
+    parseKeysRegex(/^f(..)$/, /^(f|f.)$/, [Mode.Normal, Mode.Visual], (vimState, editor, match) => {
         findForward(vimState, editor, match);
 
         vimState.semicolonAction = (innerVimState, innerEditor) => {
@@ -71,7 +71,7 @@ export const motions: Action[] = [
         };
     }),
 
-    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
+    parseKeysRegex(/^F(..)$/, /^(F|F.)$/, [Mode.Normal, Mode.Visual], (vimState, editor, match) => {
         findBackward(vimState, editor, match);
 
         vimState.semicolonAction = (innerVimState, innerEditor) => {
@@ -83,7 +83,7 @@ export const motions: Action[] = [
         };
     }),
 
-    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
+    parseKeysRegex(/^t(.)$/, /^t$/, [Mode.Normal, Mode.Visual], (vimState, editor, match) => {
         tillForward(vimState, editor, match);
 
         vimState.semicolonAction = (innerVimState, innerEditor) => {
@@ -95,7 +95,7 @@ export const motions: Action[] = [
         };
     }),
 
-    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual],  (vimState, editor, match) => {
+    parseKeysRegex(/^T(.)$/, /^T$/, [Mode.Normal, Mode.Visual], (vimState, editor, match) => {
         tillBackward(vimState, editor, match);
 
         vimState.semicolonAction = (innerVimState, innerEditor) => {
@@ -107,38 +107,38 @@ export const motions: Action[] = [
         };
     }),
 
-    parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['g', 'g'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(0, 0);
         });
     }),
 
-    parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['G'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(document.lineCount - 1, 0);
         });
     }),
 
-    parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['}'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(paragraphForward(document, position.line), 0);
         });
     }),
 
-    parseKeysExact(['{'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['{'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             return new vscode.Position(paragraphBackward(document, position.line), 0);
         });
     }),
 
-    parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['$'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             const lineLength = document.lineAt(position.line).text.length;
             return position.with({ character: Math.max(lineLength - 1, 0) });
         });
     }),
 
-    parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine],  (vimState, editor) => {
+    parseKeysExact(['_'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
             const line = document.lineAt(position.line);
             return position.with({ character: line.firstNonWhitespaceCharacterIndex });
