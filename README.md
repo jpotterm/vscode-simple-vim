@@ -111,6 +111,8 @@ Actions are miscellaneous commands that don't follow the well-defined patterns o
 | `Y` | Yank to the end of the line. |
 | `rr` | Yank current line and delete it. |
 | `R` | Yank to the end of the line and delete it. |
+| `ss` | Select current line. |
+| `S` | Select to the end of the line. |
 | `x` | Delete character. |
 | `H` | Move to top of screen. |
 | `M` | Move to middle of screen. |

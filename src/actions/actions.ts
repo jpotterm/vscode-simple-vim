@@ -185,6 +185,30 @@ export const actions: Action[] = [
         vscode.commands.executeCommand('deleteAllRight');
     }),
 
+    parseKeysExact(['s', 's'], [Mode.Normal], (vimState, editor) => {
+        editor.selections = editor.selections.map(selection => {
+            return new vscode.Selection(
+                selection.active.with({ character: 0 }),
+                positionUtils.lineEnd(editor.document, selection.active),
+            );
+        });
+
+        enterVisualLineMode(vimState);
+        setModeCursorStyle(vimState.mode, editor);
+    }),
+
+    parseKeysExact(['S'], [Mode.Normal], (vimState, editor) => {
+        editor.selections = editor.selections.map(selection => {
+            return new vscode.Selection(
+                selection.active,
+                positionUtils.lineEnd(editor.document, selection.active),
+            );
+        });
+
+        enterVisualMode(vimState);
+        setModeCursorStyle(vimState.mode, editor);
+    }),
+
     parseKeysExact(['x'], [Mode.Normal], (vimState, editor) => {
         vscode.commands.executeCommand('deleteRight');
     }),
