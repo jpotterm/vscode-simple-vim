@@ -76,7 +76,7 @@ export function adjustInsertPositions(positions: vscode.Position[], contentsList
     let characterOffset = 0;
     let lineNumber = 0;
 
-    for (let indexPosition of indexPositions) {
+    for (const indexPosition of indexPositions) {
         // Adjust position
 
         const adjustedLine = indexPosition.position.line + lineOffset;
@@ -90,7 +90,6 @@ export function adjustInsertPositions(positions: vscode.Position[], contentsList
             originalIndex: indexPosition.originalIndex,
             position: new vscode.Position(adjustedLine, adjustedCharacter),
         });
-
 
         // Increase offsets
 

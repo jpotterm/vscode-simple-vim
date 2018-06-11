@@ -4,7 +4,12 @@ import * as positionUtils from '../position_utils';
 import { VimState } from '../vim_state_types';
 import { Mode } from '../modes_types';
 import { enterNormalMode, setModeCursorStyle } from '../modes';
-import { getRegisterContentsList, adjustInsertPositions, getInsertRangesFromBeginning, getInsertRangesFromEnd } from './common';
+import {
+    getRegisterContentsList,
+    adjustInsertPositions,
+    getInsertRangesFromBeginning,
+    getInsertRangesFromEnd,
+} from './common';
 
 export function putAfter(vimState: VimState, editor: vscode.TextEditor) {
     const registerContentsList = getRegisterContentsList(vimState, editor);
@@ -23,7 +28,11 @@ export function putAfter(vimState: VimState, editor: vscode.TextEditor) {
     }
 }
 
-function normalModeLinewise(vimState: VimState, editor: vscode.TextEditor, registerContentsList: (string | undefined)[]) {
+function normalModeLinewise(
+    vimState: VimState,
+    editor: vscode.TextEditor,
+    registerContentsList: (string | undefined)[],
+) {
     const insertContentsList = registerContentsList.map(contents => {
         if (contents === undefined) return undefined;
         else return '\n' + contents;
@@ -54,7 +63,11 @@ function normalModeLinewise(vimState: VimState, editor: vscode.TextEditor, regis
     };
 }
 
-function normalModeCharacterwise(vimState: VimState, editor: vscode.TextEditor, registerContentsList: (string | undefined)[]) {
+function normalModeCharacterwise(
+    vimState: VimState,
+    editor: vscode.TextEditor,
+    registerContentsList: (string | undefined)[],
+) {
     const insertPositions = editor.selections.map(selection => {
         return positionUtils.right(editor.document, selection.active);
     });

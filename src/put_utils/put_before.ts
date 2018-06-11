@@ -15,7 +15,11 @@ export function putBefore(vimState: VimState, editor: vscode.TextEditor) {
     }
 }
 
-function normalModeLinewise(vimState: VimState, editor: vscode.TextEditor, registerContentsList: (string | undefined)[]) {
+function normalModeLinewise(
+    vimState: VimState,
+    editor: vscode.TextEditor,
+    registerContentsList: (string | undefined)[],
+) {
     const insertContentsList = registerContentsList.map(contents => {
         if (contents === undefined) return undefined;
         else return contents + '\n';
@@ -49,7 +53,11 @@ function normalModeLinewise(vimState: VimState, editor: vscode.TextEditor, regis
     };
 }
 
-function normalModeCharacterwise(vimState: VimState, editor: vscode.TextEditor, registerContentsList: (string | undefined)[]) {
+function normalModeCharacterwise(
+    vimState: VimState,
+    editor: vscode.TextEditor,
+    registerContentsList: (string | undefined)[],
+) {
     const insertPositions = editor.selections.map(selection => selection.active);
     const adjustedInsertPositions = adjustInsertPositions(insertPositions, registerContentsList);
     const insertRanges = getInsertRangesFromBeginning(adjustedInsertPositions, registerContentsList);

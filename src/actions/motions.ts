@@ -32,21 +32,29 @@ export const motions: Action[] = [
         });
     }),
 
-    parseKeysExact(['k'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (outerVimState, editor) => {
-        const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
-        vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'wrappedLine', select: isVisual }).then(() => {
-            if (outerVimState.mode === Mode.VisualLine) {
-                setVisualLineSelections(editor);
-            }
+    parseKeysExact(['k'], [Mode.Normal, Mode.Visual], (outerVimState, editor) => {
+        vscode.commands.executeCommand('cursorMove', {
+            to: 'up',
+            by: 'wrappedLine',
+            select: outerVimState.mode === Mode.Visual,
+        });
+    }),
+    parseKeysExact(['k'], [Mode.VisualLine], (outerVimState, editor) => {
+        vscode.commands.executeCommand('cursorMove', { to: 'up', by: 'line', select: true }).then(() => {
+            setVisualLineSelections(editor);
         });
     }),
 
-    parseKeysExact(['j'], [Mode.Normal, Mode.Visual, Mode.VisualLine], (outerVimState, editor) => {
-        const isVisual = outerVimState.mode === Mode.Visual || outerVimState.mode === Mode.VisualLine;
-        vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'wrappedLine', select: isVisual }).then(() => {
-            if (outerVimState.mode === Mode.VisualLine) {
-                setVisualLineSelections(editor);
-            }
+    parseKeysExact(['j'], [Mode.Normal, Mode.Visual], (outerVimState, editor) => {
+        vscode.commands.executeCommand('cursorMove', {
+            to: 'down',
+            by: 'wrappedLine',
+            select: outerVimState.mode === Mode.Visual,
+        });
+    }),
+    parseKeysExact(['j'], [Mode.VisualLine], (outerVimState, editor) => {
+        vscode.commands.executeCommand('cursorMove', { to: 'down', by: 'line', select: true }).then(() => {
+            setVisualLineSelections(editor);
         });
     }),
 

@@ -44,27 +44,6 @@ function onSelectionChange(vimState: VimState, e: vscode.TextEditorSelectionChan
             setModeCursorStyle(vimState.mode, e.textEditor);
         }
     }
-
-    // The following code makes find/replace take extra clicks because after replacing it moves
-    // the cursor to the next result with an empty selection which causes us to set editor.selections.
-    // So for now we don't need this.
-
-    // if (vimState.mode === Mode.Normal) {
-    //     // Prevent cursor from landing on the last character of the line
-    //     editor.selections = editor.selections.map((selection, i) => {
-    //         const lineLength = editor.document.lineAt(selection.active.line).text.length;
-
-    //         if (lineLength > 0 && selection.active.character === lineLength) {
-    //             const newPosition = new vscode.Position(
-    //                 selection.active.line,
-    //                 lineLength - 1,
-    //             );
-    //             return new vscode.Selection(newPosition, newPosition);
-    //         } else {
-    //             return selection;
-    //         }
-    //     });
-    // }
 }
 
 function onDidChangeActiveTextEditor(vimState: VimState, editor: vscode.TextEditor | undefined) {
