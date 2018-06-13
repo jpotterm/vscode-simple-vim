@@ -213,18 +213,6 @@ export const actions: Action[] = [
         vscode.commands.executeCommand('deleteRight');
     }),
 
-    parseKeysExact(['H'], [Mode.Normal], (vimState, editor) => {
-        vscode.commands.executeCommand('cursorMove', { to: 'viewPortTop', by: 'line' });
-    }),
-
-    parseKeysExact(['M'], [Mode.Normal], (vimState, editor) => {
-        vscode.commands.executeCommand('cursorMove', { to: 'viewPortCenter', by: 'line' });
-    }),
-
-    parseKeysExact(['L'], [Mode.Normal], (vimState, editor) => {
-        vscode.commands.executeCommand('cursorMove', { to: 'viewPortBottom', by: 'line' });
-    }),
-
     parseKeysExact(['z', 't'], [Mode.Normal], (vimState, editor) => {
         vscode.commands.executeCommand('revealLine', {
             lineNumber: editor.selection.active.line,

@@ -81,6 +81,9 @@ Motions move the cursor and can be used in Normal or Visual mode. In Visual mode
 | `{` | Up a paragraph. |
 | `$` | End of line. |
 | `_` | Beginning of line. |
+| `H` | Top of screen. |
+| `M` | Middle of screen. |
+| `L` | Bottom of screen. |
 
 
 ## Actions
@@ -114,9 +117,6 @@ Actions are miscellaneous commands that don't follow the well-defined patterns o
 | `ss` | Select current line. |
 | `S` | Select to the end of the line. |
 | `x` | Delete character. |
-| `H` | Move to top of screen. |
-| `M` | Move to middle of screen. |
-| `L` | Move to bottom of screen. |
 | `zt` | Scroll so that cursor is at the top of the screen. |
 | `zz` | Scroll so that cursor is in the middle of the screen. |
 | `zb` | Scroll so that cursor is at the bottom of the screen. |
