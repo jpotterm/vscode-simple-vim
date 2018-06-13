@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { createOperatorMotionExactKeys, createOperatorMotionRegex } from '../parse_keys';
-import { OperatorMotion } from '../parse_keys_types';
+import { createOperatorRangeExactKeys, createOperatorRangeRegex } from '../parse_keys';
+import { OperatorRange } from '../parse_keys_types';
 import { searchForward, searchBackward, searchBackwardBracket, searchForwardBracket } from '../search_utils';
 import * as positionUtils from '../position_utils';
 import { wordRanges, whitespaceWordRanges } from '../word_utils';
@@ -12,8 +12,8 @@ import { indentLevelRange } from '../indent_utils';
 import { getTags } from '../tag_utils';
 import { arrayFindLast } from '../array_utils';
 
-export const operatorMotions: OperatorMotion[] = [
-    createOperatorMotionExactKeys(['l'], false, (vimState, document, position) => {
+export const operatorRanges: OperatorRange[] = [
+    createOperatorRangeExactKeys(['l'], false, (vimState, document, position) => {
         const right = positionUtils.right(document, position);
 
         if (right.isEqual(position)) {
@@ -22,7 +22,7 @@ export const operatorMotions: OperatorMotion[] = [
             return new vscode.Range(position, right);
         }
     }),
-    createOperatorMotionExactKeys(['h'], false, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['h'], false, (vimState, document, position) => {
         const left = positionUtils.left(position);
 
         if (left.isEqual(position)) {
@@ -31,7 +31,7 @@ export const operatorMotions: OperatorMotion[] = [
             return new vscode.Range(position, left);
         }
     }),
-    createOperatorMotionExactKeys(['k'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['k'], true, (vimState, document, position) => {
         if (position.line === 0) {
             return new vscode.Range(
                 new vscode.Position(0, 0),
@@ -45,7 +45,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['j'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['j'], true, (vimState, document, position) => {
         if (position.line === document.lineCount - 1) {
             return new vscode.Range(
                 new vscode.Position(position.line, 0),
@@ -59,22 +59,22 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['w'], false, createWordForwardHandler(wordRanges)),
-    createOperatorMotionExactKeys(['W'], false, createWordForwardHandler(whitespaceWordRanges)),
+    createOperatorRangeExactKeys(['w'], false, createWordForwardHandler(wordRanges)),
+    createOperatorRangeExactKeys(['W'], false, createWordForwardHandler(whitespaceWordRanges)),
 
-    createOperatorMotionExactKeys(['b'], false, createWordBackwardHandler(wordRanges)),
-    createOperatorMotionExactKeys(['B'], false, createWordBackwardHandler(whitespaceWordRanges)),
+    createOperatorRangeExactKeys(['b'], false, createWordBackwardHandler(wordRanges)),
+    createOperatorRangeExactKeys(['B'], false, createWordBackwardHandler(whitespaceWordRanges)),
 
-    createOperatorMotionExactKeys(['e'], false, createWordEndHandler(wordRanges)),
-    createOperatorMotionExactKeys(['E'], false, createWordEndHandler(whitespaceWordRanges)),
+    createOperatorRangeExactKeys(['e'], false, createWordEndHandler(wordRanges)),
+    createOperatorRangeExactKeys(['E'], false, createWordEndHandler(whitespaceWordRanges)),
 
-    createOperatorMotionExactKeys(['i', 'w'], false, createInnerWordHandler(wordRanges)),
-    createOperatorMotionExactKeys(['i', 'W'], false, createInnerWordHandler(whitespaceWordRanges)),
+    createOperatorRangeExactKeys(['i', 'w'], false, createInnerWordHandler(wordRanges)),
+    createOperatorRangeExactKeys(['i', 'W'], false, createInnerWordHandler(whitespaceWordRanges)),
 
-    createOperatorMotionExactKeys(['a', 'w'], false, createOuterWordHandler(wordRanges)),
-    createOperatorMotionExactKeys(['a', 'W'], false, createOuterWordHandler(whitespaceWordRanges)),
+    createOperatorRangeExactKeys(['a', 'w'], false, createOuterWordHandler(wordRanges)),
+    createOperatorRangeExactKeys(['a', 'W'], false, createOuterWordHandler(whitespaceWordRanges)),
 
-    createOperatorMotionRegex(/^f(..)$/, /^(f|f.)$/, false, (vimState, document, position, match) => {
+    createOperatorRangeRegex(/^f(..)$/, /^(f|f.)$/, false, (vimState, document, position, match) => {
         const fromPosition = position.with({ character: position.character + 1 });
         const result = searchForward(document, match[1], fromPosition);
 
@@ -85,7 +85,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionRegex(/^F(..)$/, /^(F|F.)$/, false, (vimState, document, position, match) => {
+    createOperatorRangeRegex(/^F(..)$/, /^(F|F.)$/, false, (vimState, document, position, match) => {
         const fromPosition = position.with({ character: position.character - 1 });
         const result = searchBackward(document, match[1], fromPosition);
 
@@ -96,7 +96,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionRegex(/^t(.)$/, /^t$/, false, (vimState, document, position, match) => {
+    createOperatorRangeRegex(/^t(.)$/, /^t$/, false, (vimState, document, position, match) => {
         const lineText = document.lineAt(position.line).text;
         const result = lineText.indexOf(match[1], position.character + 1);
 
@@ -107,7 +107,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionRegex(/^T(.)$/, /^T$/, false, (vimState, document, position, match) => {
+    createOperatorRangeRegex(/^T(.)$/, /^T$/, false, (vimState, document, position, match) => {
         const lineText = document.lineAt(position.line).text;
         const result = lineText.lastIndexOf(match[1], position.character - 1);
 
@@ -119,7 +119,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['g', 'g'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['g', 'g'], true, (vimState, document, position) => {
         const lineLength = document.lineAt(position.line).text.length;
 
         return new vscode.Range(
@@ -128,7 +128,7 @@ export const operatorMotions: OperatorMotion[] = [
         );
     }),
 
-    createOperatorMotionExactKeys(['G'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['G'], true, (vimState, document, position) => {
         const lineLength = document.lineAt(document.lineCount - 1).text.length;
 
         return new vscode.Range(
@@ -138,7 +138,7 @@ export const operatorMotions: OperatorMotion[] = [
     }),
 
     // TODO: return undefined?
-    createOperatorMotionExactKeys(['}'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['}'], true, (vimState, document, position) => {
         return new vscode.Range(
             position.with({ character: 0 }),
             new vscode.Position(paragraphForward(document, position.line), 0),
@@ -146,14 +146,14 @@ export const operatorMotions: OperatorMotion[] = [
     }),
 
     // TODO: return undefined?
-    createOperatorMotionExactKeys(['{'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['{'], true, (vimState, document, position) => {
         return new vscode.Range(
             new vscode.Position(paragraphBackward(document, position.line), 0),
             position.with({ character: 0 }),
         );
     }),
 
-    createOperatorMotionExactKeys(['i', 'p'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['i', 'p'], true, (vimState, document, position) => {
         const result = paragraphRangeInner(document, position.line);
 
         if (result) {
@@ -166,7 +166,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['a', 'p'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['a', 'p'], true, (vimState, document, position) => {
         const result = paragraphRangeOuter(document, position.line);
 
         if (result) {
@@ -179,28 +179,28 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['i', "'"], false, createInnerQuoteHandler("'")),
-    createOperatorMotionExactKeys(['a', "'"], false, createOuterQuoteHandler("'")),
+    createOperatorRangeExactKeys(['i', "'"], false, createInnerQuoteHandler("'")),
+    createOperatorRangeExactKeys(['a', "'"], false, createOuterQuoteHandler("'")),
 
-    createOperatorMotionExactKeys(['i', '"'], false, createInnerQuoteHandler('"')),
-    createOperatorMotionExactKeys(['a', '"'], false, createOuterQuoteHandler('"')),
+    createOperatorRangeExactKeys(['i', '"'], false, createInnerQuoteHandler('"')),
+    createOperatorRangeExactKeys(['a', '"'], false, createOuterQuoteHandler('"')),
 
-    createOperatorMotionExactKeys(['i', '`'], false, createInnerQuoteHandler('`')),
-    createOperatorMotionExactKeys(['a', '`'], false, createOuterQuoteHandler('`')),
+    createOperatorRangeExactKeys(['i', '`'], false, createInnerQuoteHandler('`')),
+    createOperatorRangeExactKeys(['a', '`'], false, createOuterQuoteHandler('`')),
 
-    createOperatorMotionExactKeys(['i', '('], false, createInnerBracketHandler('(', ')')),
-    createOperatorMotionExactKeys(['a', '('], false, createOuterBracketHandler('(', ')')),
+    createOperatorRangeExactKeys(['i', '('], false, createInnerBracketHandler('(', ')')),
+    createOperatorRangeExactKeys(['a', '('], false, createOuterBracketHandler('(', ')')),
 
-    createOperatorMotionExactKeys(['i', '{'], false, createInnerBracketHandler('{', '}')),
-    createOperatorMotionExactKeys(['a', '{'], false, createOuterBracketHandler('{', '}')),
+    createOperatorRangeExactKeys(['i', '{'], false, createInnerBracketHandler('{', '}')),
+    createOperatorRangeExactKeys(['a', '{'], false, createOuterBracketHandler('{', '}')),
 
-    createOperatorMotionExactKeys(['i', '['], false, createInnerBracketHandler('[', ']')),
-    createOperatorMotionExactKeys(['a', '['], false, createOuterBracketHandler('[', ']')),
+    createOperatorRangeExactKeys(['i', '['], false, createInnerBracketHandler('[', ']')),
+    createOperatorRangeExactKeys(['a', '['], false, createOuterBracketHandler('[', ']')),
 
-    createOperatorMotionExactKeys(['i', '<'], false, createInnerBracketHandler('<', '>')),
-    createOperatorMotionExactKeys(['a', '<'], false, createOuterBracketHandler('<', '>')),
+    createOperatorRangeExactKeys(['i', '<'], false, createInnerBracketHandler('<', '>')),
+    createOperatorRangeExactKeys(['a', '<'], false, createOuterBracketHandler('<', '>')),
 
-    createOperatorMotionExactKeys(['i', 't'], false, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['i', 't'], false, (vimState, document, position) => {
         const tags = getTags(document);
 
         const closestTag = arrayFindLast(tags, tag => {
@@ -229,7 +229,7 @@ export const operatorMotions: OperatorMotion[] = [
         }
     }),
 
-    createOperatorMotionExactKeys(['a', 't'], false, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['a', 't'], false, (vimState, document, position) => {
         const tags = getTags(document);
 
         const closestTag = arrayFindLast(tags, tag => {
@@ -260,7 +260,7 @@ export const operatorMotions: OperatorMotion[] = [
     }),
 
     // TODO: return undefined?
-    createOperatorMotionExactKeys(['i', 'i'], true, (vimState, document, position) => {
+    createOperatorRangeExactKeys(['i', 'i'], true, (vimState, document, position) => {
         const simpleRange = indentLevelRange(document, position.line);
 
         return new vscode.Range(

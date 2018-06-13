@@ -7,7 +7,7 @@ Once you enter Insert mode it will be a completely vanilla VSCode experience: th
 
 ## Operators
 
-Operators act on a range of text. In Normal mode the range is specified by the OperatorMotion typed after the operator. In Visual mode it is the visual selection.
+Operators act on a range of text. In Normal mode the range is specified by the OperatorRange typed after the operator. In Visual mode it is the visual selection.
 
 | Keys | Description |
 |-|-|
@@ -18,9 +18,9 @@ Operators act on a range of text. In Normal mode the range is specified by the O
 | `s` | Select range and enter Visual mode. |
 
 
-## OperatorMotions
+## OperatorRanges
 
-OperatorMotions select a range for an Operator to act on. They must be used in Normal mode by typing an Operator and then an OperatorMotion.
+OperatorRanges select a range for an Operator to act on. They must be used in Normal mode by typing an Operator and then an OperatorRange.
 
 | Keys | Description |
 |-|-|
@@ -88,7 +88,7 @@ Motions move the cursor and can be used in Normal or Visual mode. In Visual mode
 
 ## Actions
 
-Actions are miscellaneous commands that don't follow the well-defined patterns of Operators, OperatorMotions, or Motions.
+Actions are miscellaneous commands that don't follow the well-defined patterns of Operators, OperatorRanges, or Motions.
 
 | Keys | Description |
 |-|-|

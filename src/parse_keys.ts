@@ -4,10 +4,10 @@ import { VimState } from './vim_state_types';
 import { Mode } from './modes_types';
 import {
     ParseKeysStatus,
-    OperatorMotion,
+    OperatorRange,
     ParseFailure,
     ParseOperatorPartSuccess,
-    ParseOperatorMotionSuccess,
+    ParseOperatorRangeSuccess,
 } from './parse_keys_types';
 import { Action } from './action_types';
 
@@ -104,12 +104,12 @@ function parseOperatorPart(keys: string[], operatorKeys: string[]): ParseFailure
     }
 }
 
-function parseOperatorMotionPart(
+function parseOperatorRangePart(
     vimState: VimState,
     keys: string[],
     editor: vscode.TextEditor,
-    motions: OperatorMotion[],
-): ParseFailure | ParseOperatorMotionSuccess {
+    motions: OperatorRange[],
+): ParseFailure | ParseOperatorRangeSuccess {
     let could = false;
     for (const motion of motions) {
         const result = motion(vimState, keys, editor);
@@ -136,7 +136,7 @@ function parseOperatorMotionPart(
 
 export function parseKeysOperator(
     operatorKeys: string[],
-    motions: OperatorMotion[],
+    motions: OperatorRange[],
     operator: (
         vimState: VimState,
         editor: vscode.TextEditor,
@@ -157,7 +157,7 @@ export function parseKeysOperator(
                 return ParseKeysStatus.MORE_INPUT;
             }
 
-            const motionResult = parseOperatorMotionPart(vimState, operatorResult.rest, editor, motions);
+            const motionResult = parseOperatorRangePart(vimState, operatorResult.rest, editor, motions);
             if (motionResult.kind === 'failure') {
                 return motionResult.status;
             }
@@ -177,11 +177,11 @@ export function parseKeysOperator(
     };
 }
 
-export function createOperatorMotionExactKeys(
+export function createOperatorRangeExactKeys(
     matchKeys: string[],
     linewise: boolean,
     f: (vimState: VimState, document: vscode.TextDocument, position: vscode.Position) => vscode.Range | undefined,
-): OperatorMotion {
+): OperatorRange {
     return (vimState, keys, editor) => {
         if (arrayEquals(keys, matchKeys)) {
             const ranges = editor.selections.map(selection => {
@@ -206,7 +206,7 @@ export function createOperatorMotionExactKeys(
     };
 }
 
-export function createOperatorMotionRegex(
+export function createOperatorRangeRegex(
     doesPattern: RegExp,
     couldPattern: RegExp,
     linewise: boolean,
@@ -216,7 +216,7 @@ export function createOperatorMotionRegex(
         position: vscode.Position,
         match: RegExpMatchArray,
     ) => vscode.Range | undefined,
-): OperatorMotion {
+): OperatorRange {
     return (vimState, keys, editor) => {
         const keysStr = keys.join('');
         const doesMatch = keysStr.match(doesPattern);

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { Action } from '../action_types';
-import { operatorMotions } from './operator_motions';
+import { operatorRanges } from './operator_ranges';
 import { parseKeysOperator } from '../parse_keys';
 import { enterInsertMode, enterNormalMode, setModeCursorStyle, enterVisualLineMode, enterVisualMode } from '../modes';
 import { removeTypeSubscription } from '../type_subscription';
@@ -10,7 +10,7 @@ import { Mode } from '../modes_types';
 import { flashYankHighlight } from '../yank_highlight';
 
 export const operators: Action[] = [
-    parseKeysOperator(['d'], operatorMotions, (vimState, editor, ranges, linewise) => {
+    parseKeysOperator(['d'], operatorRanges, (vimState, editor, ranges, linewise) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -22,7 +22,7 @@ export const operators: Action[] = [
             setModeCursorStyle(vimState.mode, editor);
         }
     }),
-    parseKeysOperator(['c'], operatorMotions, (vimState, editor, ranges, linewise) => {
+    parseKeysOperator(['c'], operatorRanges, (vimState, editor, ranges, linewise) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -39,7 +39,7 @@ export const operators: Action[] = [
         setModeCursorStyle(vimState.mode, editor);
         removeTypeSubscription(vimState);
     }),
-    parseKeysOperator(['y'], operatorMotions, (vimState, editor, ranges, linewise) => {
+    parseKeysOperator(['y'], operatorRanges, (vimState, editor, ranges, linewise) => {
         if (ranges.every(x => x === undefined)) return;
 
         yank(vimState, editor, ranges, linewise);
@@ -63,7 +63,7 @@ export const operators: Action[] = [
             flashYankHighlight(editor, highlightRanges);
         }
     }),
-    parseKeysOperator(['r'], operatorMotions, (vimState, editor, ranges, linewise) => {
+    parseKeysOperator(['r'], operatorRanges, (vimState, editor, ranges, linewise) => {
         if (ranges.every(x => x === undefined)) return;
 
         cursorsToRangesStart(editor, ranges);
@@ -76,7 +76,7 @@ export const operators: Action[] = [
             setModeCursorStyle(vimState.mode, editor);
         }
     }),
-    parseKeysOperator(['s'], operatorMotions, (vimState, editor, ranges, linewise) => {
+    parseKeysOperator(['s'], operatorRanges, (vimState, editor, ranges, linewise) => {
         if (
             ranges.every(x => x === undefined) ||
             vimState.mode === Mode.Visual ||

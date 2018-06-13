@@ -18,7 +18,7 @@ export type ParseOperatorPartSuccess = {
     rest: string[];
 };
 
-export type ParseOperatorMotionSuccess = {
+export type ParseOperatorRangeSuccess = {
     kind: 'success';
     ranges: (vscode.Range | undefined)[];
     linewise: boolean;
@@ -26,11 +26,11 @@ export type ParseOperatorMotionSuccess = {
 
 export type ParseOperatorSuccess = {
     kind: 'success';
-    motion: OperatorMotion | undefined;
+    motion: OperatorRange | undefined;
 };
 
-export type OperatorMotion = (
+export type OperatorRange = (
     vimState: VimState,
     keys: string[],
     editor: vscode.TextEditor,
-) => ParseFailure | ParseOperatorMotionSuccess;
+) => ParseFailure | ParseOperatorRangeSuccess;
