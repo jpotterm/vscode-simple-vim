@@ -1,8 +1,7 @@
 {
     "defaultSeverity": "error",
     "extends": [
-        "tslint:recommended",
-        "tslint-no-circular-imports"
+        "tslint:recommended"
     ],
     "jsRules": {},
     "rules": {
