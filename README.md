@@ -142,13 +142,17 @@ SimpleVim prioritizes simplicity and integration with native VSCode features ove
 
 - SimpleVim has no registers. Instead the operators have been modified so deleting text does not overwrite the text you yanked. A new `r` operator has been added for when you want to yank and delete text at the same time.
 
-- SimpleVim's `f` and `t` motions work slightly differently. `t` and `f` behave like Vim's `/` command, but `t` takes one character and `f` takes two. Or in other words, `t` works like Vim's `t` in Normal mode but Vim's `f` in Visual mode. And `f` behaves like the vim-sneak plugin.
+- SimpleVim's `f` and `t` motions work slightly differently from Vim's. `t` and `f` behave like Vim's `/` command, but `t` takes one character and `f` takes two. Or in other words, `t` works like Vim's `t` in Normal mode but Vim's `f` in Visual mode. And `f` behaves like the vim-sneak plugin.
 
 - SimpleVim has no `/` (search) command. Instead you can either use the `f` motion or the native VSCode find. Between them most of the uses for `/` are taken care of.
 
 - SimpleVim has no `>` (indent) command. Instead you can use VSCode's `Cmd+]`.
 
 - SimpleVim has no `gU` (uppercase) command. Instead you can use VSCode's `Transform to Uppercase` from the Command Palette.
+
+- SimpleVim has no jump list (`Ctrl+o` and `Ctrl+i` in Vim). Instead you can use VSCode's native jump list with `Ctrl+-` and `Ctrl+_`.
+
+- SimpleVim does not support marks. If you're jumping back and forth often between two places in a file you can use VSCode's split window feature, and use `Cmd+1` and `Cmd+2` to focus them. If you just need to jump back to where you've been, you can use VSCode's `Ctrl+-`.
 
 
 ## Settings
