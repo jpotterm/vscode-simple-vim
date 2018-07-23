@@ -1,9 +1,21 @@
 import * as vscode from 'vscode';
 
+function executeMoveCommand(
+    command: 'editorScroll' | 'cursorMove',
+    options: { to: string, by: string },
+) {
+    vscode.commands.executeCommand(command, options);
+}
+
 function editorScroll(to: string, by: string) {
-    vscode.commands.executeCommand('editorScroll', {
-        to: to,
-        by: by,
+    executeMoveCommand('editorScroll', {
+        to,
+        by,
+    });
+
+    executeMoveCommand('cursorMove', {
+        to: 'viewPortCenter',
+        by: 'line',
     });
 }
 
