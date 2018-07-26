@@ -179,10 +179,19 @@ export const actions: Action[] = [
         yankLine(vimState, editor);
         deleteLine(vimState, editor);
     }),
-
+    
     parseKeysExact(['R'], [Mode.Normal], (vimState, editor) => {
         yankToEndOfLine(vimState, editor);
         vscode.commands.executeCommand('deleteAllRight');
+    }),
+    
+    parse_keys_1.parseKeysExact(['J'], [modes_types_1.Mode.Normal, modes_types_1.Mode.Visual, modes_types_1.Mode.VisualLine], (vimState, editor) => {
+        vscode.commands.executeCommand('editor.action.joinLines'); 
+        if (vimState.mode === modes_types_1.Mode.Visual || vimState.mode === modes_types_1.Mode.VisualLine) {
+            // TODO: Clear selection after lines are joined
+            modes_1.enterNormalMode(vimState);
+            modes_1.setModeCursorStyle(vimState.mode, editor);
+        }
     }),
 
     parseKeysExact(['s', 's'], [Mode.Normal], (vimState, editor) => {
