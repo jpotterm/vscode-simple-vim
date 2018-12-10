@@ -241,9 +241,7 @@ function execRegexMotion(
 function execMotion(vimState: VimState, editor: vscode.TextEditor, motion: (args: MotionArgs) => vscode.Position) {
     const document = editor.document;
 
-    editor.selections = editor.selections.map(x => x);
-
-    editor.selections = editor.selections.map((selection, i) => {
+    const newSelections = editor.selections.map((selection, i) => {
         if (vimState.mode === Mode.Normal) {
             const newPosition = motion({
                 document: document,
@@ -277,8 +275,10 @@ function execMotion(vimState: VimState, editor: vscode.TextEditor, motion: (args
         }
     });
 
+    editor.selections = newSelections;
+
     editor.revealRange(
-        new vscode.Range(editor.selection.active, editor.selection.active),
+        new vscode.Range(newSelections[0].active, newSelections[0].active),
         vscode.TextEditorRevealType.InCenterIfOutsideViewport,
     );
 }
