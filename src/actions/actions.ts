@@ -117,6 +117,9 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['d', 'd'], [Mode.Normal], (vimState, editor) => {
+        if (vscode.workspace.getConfiguration('simpleVim').get('ddYanks')) {
+            yankLine(vimState, editor);
+        }
         deleteLine(vimState, editor);
     }),
 
