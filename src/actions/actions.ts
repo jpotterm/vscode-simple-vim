@@ -117,10 +117,16 @@ export const actions: Action[] = [
     }),
 
     parseKeysExact(['d', 'd'], [Mode.Normal], (vimState, editor) => {
+        if (vscode.workspace.getConfiguration('simpleVim').get('deleteYanks')) {
+            yankLine(vimState, editor);
+        }
         deleteLine(vimState, editor);
     }),
 
     parseKeysExact(['D'], [Mode.Normal], (vimState, editor) => {
+        if (vscode.workspace.getConfiguration('simpleVim').get('deleteYanks')) {
+            yankToEndOfLine(vimState, editor);
+        }
         vscode.commands.executeCommand('deleteAllRight');
     }),
 

@@ -60,6 +60,11 @@
                     "type": "string",
                     "default": "#F8F3AB",
                     "description": "Background color that flashes to show the range when yanking."
+                },
+                "simpleVim.deleteYanks": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "When true, d, dd, and D yank before deleting."
                 }
             }
         }

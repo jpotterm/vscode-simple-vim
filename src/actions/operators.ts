@@ -15,6 +15,9 @@ export const operators: Action[] = [
 
         cursorsToRangesStart(editor, ranges);
 
+        if (vscode.workspace.getConfiguration('simpleVim').get('deleteYanks')) {
+          yank(vimState, editor, ranges, linewise);
+        }
         delete_(editor, ranges, linewise);
 
         if (vimState.mode === Mode.Visual || vimState.mode === Mode.VisualLine) {
