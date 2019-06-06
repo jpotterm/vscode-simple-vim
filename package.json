@@ -60,6 +60,30 @@
                     "type": "string",
                     "default": "#F8F3AB",
                     "description": "Background color that flashes to show the range when yanking."
+                },
+                "simpleVim.insertModeCursorStyle": {
+                    "type": "string",
+                    "enum": ["line", "block", "underline", "lineThin", "blockOutline", "underlineThin"],
+                    "default": "line",
+                    "description": "Cursor style for editor when in INSERT mode."
+                },
+                "simpleVim.normalModeCursorStyle": {
+                    "type": "string",
+                    "enum": ["line", "block", "underline", "lineThin", "blockOutline", "underlineThin"],
+                    "default": "underline",
+                    "description": "Cursor style for editor when in NORMAL mode."
+                },
+                "simpleVim.visualModeCursorStyle": {
+                    "type": "string",
+                    "enum": ["line", "block", "underline", "lineThin", "blockOutline", "underlineThin"],
+                    "default": "lineThin",
+                    "description": "Cursor style for editor when in VISUAL mode."
+                },
+                "simpleVim.visualLineModeCursorStyle": {
+                    "type": "string",
+                    "enum": ["line", "block", "underline", "lineThin", "blockOutline", "underlineThin"],
+                    "default": "lineThin",
+                    "description": "Cursor style for editor when in VISUAL LINE mode."
                 }
             }
         }
