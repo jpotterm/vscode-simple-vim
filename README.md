@@ -34,6 +34,8 @@ OperatorRanges select a range for an Operator to act on. They must be used in No
 | `B` | From cursor to beginning of previous word (including punctuation). |
 | `e` | From cursor to end of next word. |
 | `E` | From cursor to end of next word (including punctuation). |
+| `$` | From cursor to end of line. |
+| `_` | From cursor to beginning of line excluding leading white space. |
 | `iw` | Word under cursor. |
 | `iW` | Word (including punctuation) under cursor. |
 | `aw` | Word under cursor and whitespace after. |
