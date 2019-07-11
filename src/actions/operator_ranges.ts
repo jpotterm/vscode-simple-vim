@@ -59,6 +59,16 @@ export const operatorRanges: OperatorRange[] = [
         }
     }),
 
+    createOperatorRangeExactKeys(['_'], false, (vimState, document, position) => {
+        const line = document.lineAt(position.line);
+        const beginning = position.with({ character: line.firstNonWhitespaceCharacterIndex });
+        return new vscode.Range(position, beginning);
+    }),
+
+    createOperatorRangeExactKeys(['$'], false, (vimState, document, position) => {
+        return new vscode.Range(position, positionUtils.lineEnd(document, position));
+    }),
+
     createOperatorRangeExactKeys(['w'], false, createWordForwardHandler(wordRanges)),
     createOperatorRangeExactKeys(['W'], false, createWordForwardHandler(whitespaceWordRanges)),
 
