@@ -164,6 +164,9 @@ function delete_(editor: vscode.TextEditor, ranges: (vscode.Range | undefined)[]
 }
 
 function yank(vimState: VimState, editor: vscode.TextEditor, ranges: (vscode.Range | undefined)[], linewise: boolean) {
+    const concattedCopy = ranges.reduce((acc, range, i) => range ? acc + '\n' + editor.document.getText(range) : acc, "");
+    // @ts-ignore
+    vscode.env.clipboard.writeText(concattedCopy);
     vimState.registers = {
         contentsList: ranges.map((range, i) => {
             if (range) {

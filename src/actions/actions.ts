@@ -254,6 +254,9 @@ function deleteLine(vimState: VimState, editor: vscode.TextEditor): void {
 }
 
 function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
+    const concattedCopy = editor.selections.reduce((acc, selection, i) => acc + '\n' + editor.document.lineAt(selection.active.line).text, "");
+    // @ts-ignore
+    vscode.env.clipboard.writeText(concattedCopy);
     vimState.registers = {
         contentsList: editor.selections.map(selection => {
             return editor.document.lineAt(selection.active.line).text;
@@ -263,6 +266,9 @@ function yankLine(vimState: VimState, editor: vscode.TextEditor): void {
 }
 
 function yankToEndOfLine(vimState: VimState, editor: vscode.TextEditor): void {
+    const concattedCopy = editor.selections.reduce((acc, selection, i) => acc + '\n' + editor.document.lineAt(selection.active.line).text.substring(selection.active.character), "");
+    // @ts-ignore
+    vscode.env.clipboard.writeText(concattedCopy);
     vimState.registers = {
         contentsList: editor.selections.map(selection => {
             return editor.document.lineAt(selection.active.line).text.substring(selection.active.character);
