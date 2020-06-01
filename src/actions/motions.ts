@@ -26,6 +26,13 @@ export const motions: Action[] = [
             return positionUtils.rightNormal(document, position);
         });
     }),
+    
+    parseKeysExact([' '], [Mode.Normal, Mode.Visual], (vimState, editor) => {
+        execMotion(vimState, editor, ({ document, position }) => {
+            return positionUtils.rightNormal(document, position);
+        });
+    }),
+
 
     parseKeysExact(['h'], [Mode.Normal, Mode.Visual], (vimState, editor) => {
         execMotion(vimState, editor, ({ document, position }) => {
